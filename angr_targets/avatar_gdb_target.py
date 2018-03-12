@@ -1,15 +1,11 @@
 from avatar2 import *
 from angr.engines import ConcreteTarget
+import os
 
 
 
 
-'''
- User need to define its target inside the Angr script 
- like this. 
-'''
-
-class GDBConcreteTarget(ConcreteTarget):
+class AvatarGDBConcreteTarget(ConcreteTarget):
    
     def __init__(self,architecture, gdbserver_ip, gdbserver_port ):
         # Creation of the avatar-object
@@ -20,35 +16,30 @@ class GDBConcreteTarget(ConcreteTarget):
     def exit(self):
         self.avatar.shutdown()
 
-    def read_memory(self,address, size, **kwargs):
-        """
-                Reading from memory of the target
 
-                :param address:     The address to read from
-                :param size:        The size of a read word
-                :param words:       The amount of words to read (default: 1)
-                :param raw:         Whether the read memory is returned unprocessed
-                :return:          The read memory
+    def read_memory(self,address, nbytes, **kwargs):
         """
-        return self.target.read_memory(address, size, **kwargs)
+        Reading from memory of the target
 
-    def write_memory(self,address, size, value, **kwargs):
+            :param address:     The address to read from
+            :param nbytes:       The amount number of bytes to read (default: 1)
+            :param raw:         Whether the read memory is returned unprocessed
+            :return:          The read memory
+            :rtype: str
         """
-                Writing to memory of the target
+        return self.target.read_memory(address, 1, nbytes, raw=True,**kwargs)
 
-                :param address:   The address from where the memory-write should
-                                  start
-                :param size:      The size of the memory write
-                :param value:     The actual value written to memory
-                :type val:        int if num_words == 1 and raw == False
-                                  list if num_words > 1 and raw == False
-                                  str or byte if raw == True
-                :param num_words: The amount of words to read
-                :param raw:       Specifies whether to write in raw or word mode
-                :returns:         True on success else False
+    def write_memory(self,address, value, **kwargs):
         """
-        print(address,size)
-        return self.target.write_memory(address, size, value, **kwargs)
+        Writing to memory of the target
+            :param address:   The address from where the memory-write should
+                              start
+            :param value:     The actual value written to memory
+            :type value:      str
+            :returns:         True on success else False
+        """
+
+        return self.target.write_memory(address, 1, value, raw=True, **kwargs)
    
     def is_valid_address(self,address, **kwargs):
         raise NotImplementedError("ConcreteTarget is_valid_address not implemented")
@@ -56,16 +47,17 @@ class GDBConcreteTarget(ConcreteTarget):
     def read_register(self,register,**kwargs):
         """"
         Reads a register from the target
-        :param register: The name of the register
-        :return: int value of the register content
+            :param register: The name of the register
+            :return: int value of the register content
+            :rtype int
         """
         return self.target.read_register(register)
 
     def write_register(self, register, value, **kwargs):
         """
         Writes a register to the target
-        :param register:     The name of the register
-        :param value:        int value written to be written register
+            :param register:     The name of the register
+            :param value:        int value written to be written register
         """
         return self.target.write_register(register, value)
     
@@ -91,6 +83,10 @@ class GDBConcreteTarget(ConcreteTarget):
         return self.target.set_watchpoint(address, **kwargs)
 
     def run(self):
+        """
+        Resume the execution of the target
+        :return:
+        """
         self.target.cont()
         self.target.wait()
     
