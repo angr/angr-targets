@@ -1,10 +1,8 @@
 from avatar2 import *
 import subprocess
 import nose
-import struct
 from angr_targets.avatar_gdb_target import AvatarGDBConcreteTarget
 import os
-test_location = str(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'binaries/hello'))
 
 binary = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                           os.path.join('..', '..', 'binaries','tests','x86_64','fauxware'))
