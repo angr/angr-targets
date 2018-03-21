@@ -16,7 +16,6 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
     def exit(self):
         self.avatar.shutdown()
 
-
     def read_memory(self,address, nbytes, **kwargs):
         """
         Reading from memory of the target
@@ -27,6 +26,7 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
             :return:          The read memory
             :rtype: str
         """
+        print("gdb target read_memory at %x "%(address))
         return self.target.read_memory(address, 1, nbytes, raw=True,**kwargs)
 
     def write_memory(self,address, value, **kwargs):
