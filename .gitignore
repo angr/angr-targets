@@ -1,2 +1,4 @@
 angr_targets.egg-info/
 *pyc
+build/
+dist/
