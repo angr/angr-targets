@@ -1,1 +1,2 @@
-from avatar_gdb_target import AvatarGDBConcreteTarget
+from .targets.avatar_gdb import AvatarGDBConcreteTarget
+from .concrete import ConcreteTarget

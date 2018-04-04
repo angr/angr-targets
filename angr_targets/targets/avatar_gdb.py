@@ -1,8 +1,8 @@
 from avatar2 import *
-from angr.engines.concrete import ConcreteTarget
+from angr_targets.concrete import ConcreteTarget
 from angr.errors import SimMemoryError
 import logging
-l = logging.getLogger("angr_targets.avatar_gdb_target")
+l = logging.getLogger("angr_targets.avatar_gdb")
 #l.setLevel(logging.DEBUG)
 
 
