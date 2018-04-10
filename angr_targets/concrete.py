@@ -1,6 +1,6 @@
 import logging
 l = logging.getLogger("angr_targets.concrete")
-l.setLevel(logging.DEBUG)
+#l.setLevel(logging.DEBUG)
 
 class ConcreteTarget(object):
     """
@@ -73,7 +73,7 @@ class ConcreteTarget(object):
         cur_instr_after_write = self.read_memory(pc, len_payload)
         l.debug("current instruction after write %s" % (cur_instr_after_write.encode("hex")))
 
-        self.set_breakpoint(pc + len_payload)
+        self.set_breakpoint(pc + len_payload, temporary=True)
         self.run()
         result_value = self.read_register(result_register)
         l.debug("result value %x " % (result_value))
