@@ -3,7 +3,7 @@ from angr_targets.concrete import ConcreteTarget
 from angr.errors import SimMemoryError
 import logging
 l = logging.getLogger("angr_targets.avatar_gdb")
-#l.setLevel(logging.DEBUG)
+l.setLevel(logging.DEBUG)
 
 
 class AvatarGDBConcreteTarget(ConcreteTarget):
@@ -77,10 +77,10 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
                 :param str regex:     If set, inserts breakpoints matching the regex
                 :param str condition: If set, inserts a breakpoint with the condition
                 :param int ignore_count: Amount of times the bp should be ignored
-                :param int thread:    Threadno in which this breakpoints should be added
+                :param int thread:    Thread cno in which this breakpoints should be added
         """
         l.debug("gdb target set_breakpoint at %x "%(address))
-        return self.target.set_breakpoint(address,temporary=True, **kwargs)
+        return self.target.set_breakpoint(address, **kwargs)
 
     def set_watchpoint(self,address, **kwargs):
         """Inserts a watchpoint
