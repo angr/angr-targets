@@ -1,6 +1,6 @@
 import logging
 l = logging.getLogger("angr_targets.concrete")
-#l.setLevel(logging.DEBUG)
+l.setLevel(logging.DEBUG)
 
 class ConcreteTarget(object):
     """

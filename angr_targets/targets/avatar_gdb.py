@@ -3,7 +3,7 @@ from angr_targets.concrete import ConcreteTarget
 from angr.errors import SimMemoryError
 import logging
 l = logging.getLogger("angr_targets.avatar_gdb")
-#l.setLevel(logging.DEBUG)
+l.setLevel(logging.DEBUG)
 
 
 class AvatarGDBConcreteTarget(ConcreteTarget):
@@ -19,7 +19,7 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
 
     def read_memory(self,address, nbytes, **kwargs):
         """
-        Reading from memory of the target
+a        Reading from memory of the target
 
             :param address:     The address to read from
             :param nbytes:       The amount number of bytes to read (default: 1)
@@ -27,10 +27,14 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
             :return:          The read memory
             :rtype: str
         """
-
-        l.debug("gdb target read_memory at %x "%(address))
         try:
-            return self.target.read_memory(address, 1, nbytes, raw=True,**kwargs)
+            res =  self.target.read_memory(address, 1, nbytes, raw=True,**kwargs)
+            if(0xf7df7000 < address < 0xf7df9700 ):
+                l.debug("----------- GS READ gdb target read_memory at %x " % (address))
+                l.debug(res.encode("hex"))
+            #l.debug("gdb target read_memory at %x "%(address))
+
+            return res
         except Exception:
             raise SimMemoryError
 
