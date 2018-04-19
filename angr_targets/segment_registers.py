@@ -3,9 +3,8 @@ import struct
 l = logging.getLogger("angr.engines.concrete.segment_registers")
 
 GDT_ADDR = 0x1000
-GDT_LIMIT = 0x2000
+GDT_LIMIT = 0x1000
 
-# this stuff is 100% copied from the unicorn regression tests
 def setup_gdt(state, fs, gs, fs_size=0xFFFFFFFF, gs_size=0xFFFFFFFF):
 
     A_PRESENT = 0x80
@@ -17,19 +16,11 @@ def setup_gdt(state, fs, gs, fs_size=0xFFFFFFFF, gs_size=0xFFFFFFFF):
     S_GDT = 0x0
     S_PRIV_0 = 0x0
 
-    #uc = self.uc
-
-    #uc.mem_map(GDT_ADDR, GDT_LIMIT)
-    normal_entry = create_gdt_entry(0, 0xFFFFFFFF, A_PRESENT | A_DATA | A_DATA_WRITABLE | A_PRIV_0 | A_DIR_CON_BIT,
-                                         F_PROT_32)
+    normal_entry = create_gdt_entry(0, 0xFFFFFFFF, A_PRESENT | A_DATA | A_DATA_WRITABLE | A_PRIV_0 | A_DIR_CON_BIT, F_PROT_32)
     stack_entry = create_gdt_entry(0, 0xFFFFFFFF, A_PRESENT | A_DATA | A_DATA_WRITABLE | A_PRIV_0, F_PROT_32)
-    fs_entry = create_gdt_entry(fs, fs_size, A_PRESENT | A_DATA | A_DATA_WRITABLE | A_PRIV_0 | A_DIR_CON_BIT,
-                                     F_PROT_32)
-    gs_entry = create_gdt_entry(gs, gs_size, A_PRESENT | A_DATA | A_DATA_WRITABLE | A_PRIV_0 | A_DIR_CON_BIT,
-                                     F_PROT_32)
+    fs_entry = create_gdt_entry(fs, fs_size, A_PRESENT | A_DATA | A_DATA_WRITABLE | A_PRIV_0 | A_DIR_CON_BIT, F_PROT_32)
+    gs_entry = create_gdt_entry(gs, gs_size, A_PRESENT | A_DATA | A_DATA_WRITABLE | A_PRIV_0 | A_DIR_CON_BIT, F_PROT_32)
     state.memory.store(GDT_ADDR + 8, normal_entry + stack_entry + fs_entry + gs_entry)
-
-    #uc.reg_write(self._uc_const.UC_X86_REG_GDTR, (0, GDT_ADDR, GDT_LIMIT, 0x0))
 
     state.regs.gdt = (GDT_ADDR << 16 | GDT_LIMIT)
     selector = create_selector(1, S_GDT | S_PRIV_0)
@@ -42,8 +33,7 @@ def setup_gdt(state, fs, gs, fs_size=0xFFFFFFFF, gs_size=0xFFFFFFFF):
     state.regs.fs = selector
     selector = create_selector(4, S_GDT | S_PRIV_0)
     state.regs.gs = selector
-    # if programs want to access this memory....... let them
-    # uc.mem_unmap(GDT_ADDR, GDT_LIMIT)
+
 
 
 def create_selector(idx, flags):

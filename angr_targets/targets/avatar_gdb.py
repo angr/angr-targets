@@ -3,7 +3,7 @@ from angr_targets.concrete import ConcreteTarget
 from angr.errors import SimMemoryError
 import logging
 l = logging.getLogger("angr_targets.avatar_gdb")
-l.setLevel(logging.DEBUG)
+#l.setLevel(logging.DEBUG)
 
 
 class AvatarGDBConcreteTarget(ConcreteTarget):
@@ -29,11 +29,7 @@ a        Reading from memory of the target
         """
         try:
             res =  self.target.read_memory(address, 1, nbytes, raw=True,**kwargs)
-            if(0xf7df7000 < address < 0xf7df9700 ):
-                l.debug("----------- GS READ gdb target read_memory at %x " % (address))
-                l.debug(res.encode("hex"))
-            #l.debug("gdb target read_memory at %x "%(address))
-
+            l.debug("gdb target read_memory at %x "%(address))
             return res
         except Exception:
             raise SimMemoryError
@@ -60,8 +56,26 @@ a        Reading from memory of the target
             :param register: The name of the register
             :return: int value of the register content
             :rtype int
+            :raise ValueError in case the register doesn't exist or any other exception
         """
-        return self.target.read_register(register)
+
+        try:
+            register_value = self.target.read_register(register)
+        except Exception as e:
+            l.debug("Received exception %s %s when reading register %s"%(type(e).__name__,e,register))
+            raise ValueError("Can't read register %s in the target" %(register))
+        # when accessing xmm registers and mm register gdb return a list of 4 32 bit values
+        # which need to be shifted appropriately to create a 128 bit value
+        if type(register_value) is list:
+            i = 0
+            result = 0
+            for val in register_value:
+                cur_val = val << i * 32
+                result |= cur_val
+                i += 1
+            return result
+        else:
+            return register_value
 
     def write_register(self, register, value, **kwargs):
         """
