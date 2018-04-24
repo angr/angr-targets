@@ -2,7 +2,7 @@ import logging
 import struct
 l = logging.getLogger("angr.engines.concrete.segment_registers")
 
-GDT_ADDR = 0x1000
+GDT_ADDR = 0x4000
 GDT_LIMIT = 0x1000
 
 def setup_gdt(state, fs, gs, fs_size=0xFFFFFFFF, gs_size=0xFFFFFFFF):

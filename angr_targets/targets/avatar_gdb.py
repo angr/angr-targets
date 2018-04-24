@@ -28,8 +28,8 @@ a        Reading from memory of the target
             :rtype: str
         """
         try:
-            res =  self.target.read_memory(address, 1, nbytes, raw=True,**kwargs)
             l.debug("gdb target read_memory at %x "%(address))
+            res =  self.target.read_memory(address, 1, nbytes, raw=True,**kwargs)
             return res
         except Exception:
             raise SimMemoryError
