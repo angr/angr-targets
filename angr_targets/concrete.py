@@ -10,7 +10,6 @@ class ConcreteTarget(object):
     def _init_(self):
         return
 
-
     def read_memory(self, address,nbytes, **kwargs):
         """
         Reading from memory of the target
