@@ -115,6 +115,7 @@ class ResumeAndWaitBreakpoint:
         try:
             idaapi.continue_process()
             idc.GetDebuggerEvent(self.mode, self.flag)
+            l.debug("Debugger stopped at " + hex(idc.get_reg_value('eip')))
         except Exception:
             self.exception = True
 
@@ -139,7 +140,7 @@ class MakeUnknown:
 
     def __call__(self):
         try:
-            print("Making unknown at " + hex(self.address))
+            l.debug("Making unknown at " + hex(self.address))
             self.result = idc.MakeUnkn(self.address, self.size)
         except Exception:
             self.exception = True
@@ -152,7 +153,7 @@ class MakeCode:
 
     def __call__(self):
         try:
-            print("Making code at " + hex(self.address))
+            l.debug("Making code at " + hex(self.address))
             self.result = idc.MakeCode(self.address)
         except Exception:
             self.exception = True
@@ -165,12 +166,23 @@ class MakeFunction:
 
     def __call__(self):
         try:
-            print("Making function at " + hex(self.address))
+            l.debug("Making function at " + hex(self.address))
             self.result = idc.MakeFunction(self.address)
         except Exception:
             self.exception = True
 
 
+class SetLineColor:
+    def __init__(self, color, address, *args, **kwargs):
+        self.color = color
+        self.address = address
+        self.exception = False
+
+    def __call__(self):
+        try:
+            self.result = idc.set_line_color(self.color, self.address)
+        except Exception:
+            self.exception = True
 
 class EditFunctionBoundaries:
     def __init__(self, start_address, end_address, *args, **kwargs):
@@ -180,9 +192,9 @@ class EditFunctionBoundaries:
 
     def __call__(self):
         try:
-            print("Updating function boundaries of function | start_address: " + hex(self.start_address) + " | end_address: " + hex(self.end_address))
+            l.debug("Updating function boundaries of function | start_address: " + hex(self.start_address) + " | end_address: " + hex(self.end_address))
             self.result = ida_funcs.set_func_end(self.start_address, self.end_address)
-            print("Updating function boundaries result: " + str(self.result))
+            l.debug("Updating function boundaries result: " + str(self.result))
         except Exception:
             self.exception = True
 
@@ -207,8 +219,8 @@ class IDAConcreteTarget(ConcreteTarget):
             :rtype int
         """
 
-        if register == 'pc':
-            register = "rip"
+        if register == 'pc' or register =='rip':
+            register = "eip"
 
         action = ReadRegisterCallable(register)
         idaapi.execute_sync(action, 0)
@@ -226,8 +238,8 @@ class IDAConcreteTarget(ConcreteTarget):
             :rtype int
         """
 
-        if register == 'pc':
-            register = "rip"
+        if register == 'pc' or register =='rip':
+            register = "eip"
 
         action = WriteRegisterCallable(register, value)
         idaapi.execute_sync(action, 0)
@@ -252,7 +264,7 @@ class IDAConcreteTarget(ConcreteTarget):
         idaapi.execute_sync(action, 0)
 
         if action.exception:
-            #print("Exception during read!")
+            #l.debug("Exception during read!")
             raise SimMemoryError
         else:
             return action.result
@@ -367,6 +379,16 @@ class IDAConcreteTarget(ConcreteTarget):
         else:
             return action.result
 
+    def set_line_color(self, color, address):
+
+        action = SetLineColor(color, address)
+        idaapi.execute_sync(action, 0)
+
+        if action.exception:
+            raise Exception
+        else:
+            return action.result
+
     def edit_function_boundaries(self, start_address, end_address):
 
         action = EditFunctionBoundaries(start_address, end_address)
@@ -402,43 +424,52 @@ class IDAConcreteTarget(ConcreteTarget):
         '''
 
         len_payload = len(shellcode)
-        print("encoded shellcode  %s len shellcode %s" % (shellcode.encode("hex"), len_payload))
+        l.debug("encoded shellcode  %s len shellcode %s" % (shellcode.encode("hex"), len_payload))
 
         shellcode_address = idaapi.get_imagebase()
 
-        old_pc = self.read_register("rip")
-        print("current pc %x" % (old_pc))
+        old_pc = self.read_register("eip")
+        l.debug("current pc %x" % (old_pc))
 
         # save the content of the current instruction
         old_instr_content = self.read_memory(shellcode_address, len_payload)
 
-        print("current data %s" % (old_instr_content.encode("hex")))
+        l.debug("current data %s" % (old_instr_content.encode("hex")))
 
         # saving value of the register which will be used to read segment register
         old_reg_value = self.read_register(result_register)
-        print("exfiltration reg %s value %x" % (result_register, old_reg_value))
+        l.debug("exfiltration reg %s value %x" % (result_register, old_reg_value))
 
         # writing to pc shellcode
         self.write_memory(shellcode_address, shellcode)
 
-        self.set_breakpoint(shellcode_address + len_payload, temporary=True)
+        idc.MakeUnkn(shellcode_address, len_payload)
 
-        self.write_register("rip", shellcode_address)
+        for addr in xrange(shellcode_address, shellcode_address+len_payload):
+            idc.MakeCode(shellcode_address)
+
+        # -2 is to avoid the warning from IDA about rip pointing to data and not code
+        self.set_breakpoint(shellcode_address + len_payload-2, temporary=True)
+
+        self.write_register("eip", shellcode_address)
 
         self.run()
 
         result_value = self.read_register(result_register)
-        print("result value %s " % (hex(result_value)))
+        l.debug("result value %s " % (hex(result_value)))
 
         # restoring previous pc
-        self.write_register("rip", old_pc)
+        self.write_register("eip", old_pc)
+
+        l.debug("Current eip value is %x " % (self.read_register("eip")))
+
+        self.remove_breakpoint(shellcode_address + len_payload-2)
 
         # restoring previous instruction
         self.write_memory(shellcode_address, old_instr_content)
 
         # restoring previous rax value
         self.write_register(result_register, old_reg_value)
-
 
         return result_value
 
