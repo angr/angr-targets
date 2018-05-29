@@ -81,7 +81,10 @@ class IDAConcreteTarget():
             :return: int value of the register content
             :rtype int
         """
-        return idc.get_reg_value(register)
+        try:
+            idc.get_reg_value(register)
+        except AssertionError as e:
+            raise
 
     def write_register(self, register, value):
         """

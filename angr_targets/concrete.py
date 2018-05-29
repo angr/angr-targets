@@ -1,6 +1,6 @@
 import logging
 l = logging.getLogger("angr_targets.concrete")
-#l.setLevel(logging.DEBUG)
+l.setLevel(logging.DEBUG)
 
 class ConcreteTarget(object):
     """
@@ -11,28 +11,65 @@ class ConcreteTarget(object):
         return
 
 
-    def read_memory(self, address, length, **kwargs):
+    def read_memory(self, address,nbytes, **kwargs):
+        """
+        Reading from memory of the target
+            :param int address: The address to read from
+            :param int nbytes:  The amount number of bytes to read
+            :return:        The memory read
+            :rtype: str
+            :raise angr.errors.SimMemoryError
+        """
         raise NotImplementedError()
 
-    def write_memory(self, address, data, **kwargs):
-        raise NotImplementedError()
-
-    def is_valid_address(self, address, **kwargs):
+    def write_memory(self, address, value, **kwargs):
+        """
+        Writing to memory of the target
+            :param int address:   The address from where the memory-write should start
+            :param str value:     The actual value written to memory
+            :raise angr.errors.ConcreteMemoryError
+        """
         raise NotImplementedError()
 
     def read_register(self, register, **kwargs):
+        """"
+        Reads a register from the target
+            :param str register: The name of the register
+            :return: int value of the register content
+            :rtype int
+            :raise angr.errors.ConcreteRegisterError in case the register doesn't exist or any other exception
+        """
         raise NotImplementedError()
 
     def write_register(self, register, value, **kwargs):
+        """
+        Writes a register to the target
+            :param str register:     The name of the register
+            :param int value:        int value written to be written register
+            :raise angr.errors.ConcreteRegisterError
+        """
         raise NotImplementedError()
 
     def set_breakpoint(self, address, **kwargs):
+        """Inserts a breakpoint
+            :param optional bool hardware: Hardware breakpoint
+            :param optional bool temporary:  Tempory breakpoint
+            :raise angr.errors.ConcreteBreakpointError
+        """
         raise NotImplementedError()
 
     def remove_breakpoint(self, address, **kwargs):
         raise NotImplementedError()
 
     def set_watchpoint(self, address, **kwargs):
+        '''
+        Inserts a watchpoint
+
+            :param address: The name of a variable or an address to watch
+            :param optional bool write:    Write watchpoint
+            :param optional bool read:     Read watchpoint
+            :raise angr.errors.ConcreteBreakpointError
+        '''
         raise NotImplementedError()
 
     def remove_watchpoint(self, address, **kwargs):

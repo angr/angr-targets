@@ -63,6 +63,8 @@ def read_fs_register_linux_x64(concrete_target):
     read_fs0_x64 = "\x64\x48\x8B\x04\x25\x00\x00\x00\x00"  # mov rax, fs:[0]
     return concrete_target.execute_shellcode(read_fs0_x64,exfiltration_reg)
 
+
+
 def read_gs_register_linux_x86(concrete_target):
     '''
     Injects small shellcode to leak the fs segment register address. In Linux x86 this address is pointed by gs[0]
@@ -88,4 +90,12 @@ def read_gs_register_windows_x64(concrete_target):
     exfiltration_reg = "rax"
     # instruction to inject for reading the value at segment value = offset
     read_gs0_x64 = "\x65\x48\x8B\x04\x25\x30\x00\x00\x00"  # mov rax, gs:[0x30]
+    return concrete_target.execute_shellcode(read_gs0_x64, exfiltration_reg)
+
+
+
+def read_gs_register_windows_x64_pyrebox(concrete_target):
+    exfiltration_reg = "rax"
+    # instruction to inject for reading the value at segment value = offset
+    read_gs0_x64 = "\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x65\x48\x8B\x04\x25\x30\x00\x00\x00"  # mov rax, gs:[0x30]
     return concrete_target.execute_shellcode(read_gs0_x64, exfiltration_reg)
