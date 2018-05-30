@@ -3,11 +3,16 @@
 import logging
 l = logging.getLogger("angr_targets.idagui")
 l.setLevel(logging.DEBUG)
+
+
+import threading
+import time
+
+from angr_targets.concrete import ConcreteTarget
+
 import idaapi
 import idc
 import idautils
-
-
 
 
 
@@ -68,7 +73,11 @@ def test_watchpoint():
 
 
 
-class IDAConcreteTarget():
+class IDAConcreteTarget(ConcreteTarget):
+
+    def __init__(self):
+        self.wait_user = threading.Semaphore()
+        self.wait_user.acquire()
 
 
     def exit(self):
@@ -194,6 +203,12 @@ class IDAConcreteTarget():
         :return:
         """
         l.debug("ida target run")
+
+        # wait until user launch symbolic execution
+        while True:
+            self.wait_user.acquire()
+            time.sleep(10)
+
         idaapi.continue_process()
         idc.GetDebuggerEvent(idc.WFNE_SUSP, -1)
 
