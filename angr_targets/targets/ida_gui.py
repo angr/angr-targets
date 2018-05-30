@@ -207,6 +207,7 @@ class IDAConcreteTarget(ConcreteTarget):
         self.wait_user.acquire()
         self.wait_user_flag = True
 
+        super(IDAConcreteTarget, self).__init__()
 
     def exit(self):
         pass

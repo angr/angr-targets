@@ -7,7 +7,8 @@ class ConcreteTarget(object):
     Concrete target used inside the SimConcreteEngine.
     This object is defined in the Angr script.
     """
-    def _init_(self):
+    def __init__(self):
+        self.timeout = None
         return
 
     def read_memory(self, address,nbytes, **kwargs):
