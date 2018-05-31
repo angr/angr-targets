@@ -1,5 +1,5 @@
 from angr_targets.concrete import ConcreteTarget
-from angr.errors import SimMemoryError
+from angr.errors import SimMemoryError, ConcreteRegisterError, ConcreteMemoryError, ConcreteBreakpointError
 import functools
 import logging
 import threading
@@ -21,7 +21,7 @@ class ReadMemoryCallable:
         self.exception = False
 
     def __call__(self):
-        l.debug("ida target reads memory at %x" % (self.address))
+        l.debug("ida target reads memory at %x" % self.address)
         self.result = idc.read_dbg_memory(self.address, self.nbytes)
         if not self.result:
             self.exception = True
@@ -159,6 +159,21 @@ class MakeCode:
             self.exception = True
 
 
+class MakeComment:
+    def __init__(self, address, text, *args, **kwargs):
+        self.address = address
+        self.text = text
+        self.exception = False
+
+    def __call__(self):
+        try:
+            l.debug("Making comment at " + hex(self.address))
+            self.result = idc.MakeComm(self.address, self.text)
+        except Exception as e:
+            print(e)
+            self.exception = True
+
+
 class MakeFunction:
     def __init__(self, address, *args, **kwargs):
         self.address = address
@@ -180,8 +195,9 @@ class SetLineColor:
 
     def __call__(self):
         try:
-            self.result = idc.set_line_color(self.color, self.address)
-        except Exception:
+            self.result = idc.SetColor(self.address, idc.CIC_ITEM, self.color)
+        except Exception as e:
+            print(e)
             self.exception = True
 
 class EditFunctionBoundaries:
@@ -219,14 +235,14 @@ class IDAConcreteTarget(ConcreteTarget):
             :return: int value of the register content
             :rtype int
         """
-        if register == 'pc' or register =='rip':
+        if register == 'pc' or register == 'rip':
             register = "eip"
 
         action = ReadRegisterCallable(register)
         idaapi.execute_sync(action, 0)
 
         if action.exception:
-            raise ValueError
+            raise ConcreteRegisterError
         else:
             return action.result
 
@@ -245,7 +261,7 @@ class IDAConcreteTarget(ConcreteTarget):
         idaapi.execute_sync(action, 0)
 
         if action.exception:
-            raise ValueError
+            raise ConcreteRegisterError
         else:
             return action.result
 
@@ -265,7 +281,7 @@ class IDAConcreteTarget(ConcreteTarget):
 
         if action.exception:
             #l.debug("Exception during read!")
-            raise SimMemoryError
+            raise ConcreteMemoryError
         else:
             return action.result
 
@@ -283,7 +299,7 @@ class IDAConcreteTarget(ConcreteTarget):
         idaapi.execute_sync(action, 0)
 
         if action.exception:
-            raise SimMemoryError
+            raise ConcreteMemoryError
         else:
             return action.written_bytes
 
@@ -303,7 +319,7 @@ class IDAConcreteTarget(ConcreteTarget):
         idaapi.execute_sync(action, 0)
 
         if action.exception:
-            raise Exception
+            raise ConcreteBreakpointError
         else:
             return action.result
 
@@ -314,7 +330,7 @@ class IDAConcreteTarget(ConcreteTarget):
         idaapi.execute_sync(action, 0)
 
         if action.exception:
-            raise Exception
+            raise ConcreteBreakpointError
         else:
             return action.result
 
@@ -378,6 +394,16 @@ class IDAConcreteTarget(ConcreteTarget):
             raise Exception
         else:
             return action.result
+
+    def make_comment(self, address, comment):
+        action = MakeComment(address, comment)
+        idaapi.execute_sync(action, 0)
+
+        if action.exception:
+            raise Exception
+        else:
+            return action.result
+
 
     def set_line_color(self, color, address):
 
