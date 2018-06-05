@@ -2,8 +2,20 @@ from angr_targets.concrete import ConcreteTarget
 from angr.errors import SimMemoryError, ConcreteRegisterError, ConcreteMemoryError, ConcreteBreakpointError
 import functools
 import logging
+<<<<<<< HEAD
+l = logging.getLogger("angr_targets.idagui")
+l.setLevel(logging.DEBUG)
+
+
 import threading
 import time
+
+from angr_targets.concrete import ConcreteTarget
+
+=======
+import threading
+import time
+>>>>>>> 4e927e55700aa1d35982b5b1af4ccd00a1c26818
 import idaapi
 import idc
 import ida_funcs
@@ -81,6 +93,10 @@ class SetBreakpointCallable:
             else:
                 bp_flag = (idc.BPT_SOFT | idc.BPT_EXEC)
 
+<<<<<<< HEAD
+USERNAME_STRING_X64 = 0x400915
+AFTER_ENTRYPOINT_X64 = 0x400728
+=======
             idc.add_bpt(self.address, bp_flag)
             enable_res = idc.enable_bpt(self.address, True)
 
@@ -95,6 +111,7 @@ class SetBreakpointCallable:
 
                 l.debug("bp flag value %x  enable_res %s cond_res %s" % (bp_flag, enable_res, cond_res))
                 self.result = enable_res and cond_res  # return False if:m enable or setting condition fails
+>>>>>>> 4e927e55700aa1d35982b5b1af4ccd00a1c26818
 
             l.debug("bp flag value %x enable_res %s" % (bp_flag, enable_res))
 
@@ -186,6 +203,14 @@ class MakeFunction:
         except Exception:
             self.exception = True
 
+<<<<<<< HEAD
+class IDAConcreteTarget(ConcreteTarget):
+
+    def __init__(self):
+        self.wait_user = threading.Semaphore()
+        self.wait_user.acquire()
+=======
+>>>>>>> 4e927e55700aa1d35982b5b1af4ccd00a1c26818
 
 class SetLineColor:
     def __init__(self, color, address, *args, **kwargs):
@@ -431,6 +456,17 @@ class IDAConcreteTarget(ConcreteTarget):
         Resume the execution of the target
         :return:
         """
+<<<<<<< HEAD
+        l.debug("ida target run")
+
+        # wait until user launch symbolic execution
+        while True:
+            self.wait_user.acquire()
+            time.sleep(10)
+
+        idaapi.continue_process()
+        idc.GetDebuggerEvent(idc.WFNE_SUSP, -1)
+=======
         action = ResumeAndWaitBreakpoint(idc.WFNE_SUSP, -1)
         idaapi.execute_sync(action, 0)
 
@@ -500,5 +536,6 @@ class IDAConcreteTarget(ConcreteTarget):
         return result_value
 
 
+>>>>>>> 4e927e55700aa1d35982b5b1af4ccd00a1c26818
 
 
