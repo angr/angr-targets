@@ -3,7 +3,7 @@ from angr_targets.concrete import ConcreteTarget
 from angr.errors import ConcreteMemoryError, ConcreteRegisterError, ConcreteBreakpointError
 import logging
 l = logging.getLogger("angr_targets.avatar_gdb")
-l.setLevel(logging.DEBUG)
+#l.setLevel(logging.DEBUG)
 
 
 class AvatarGDBConcreteTarget(ConcreteTarget):
