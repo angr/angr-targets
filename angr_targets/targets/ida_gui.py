@@ -238,8 +238,12 @@ class IDAConcreteTarget(ConcreteTarget):
             :return: int value of the register content
             :rtype int
         """
-        if register == 'pc' or register == 'rip':
-            register = "eip"
+
+        if register == 'pc':
+            if idaapi.get_inf_structure().is_64bit():
+                register = 'rip'
+            else:
+                register = 'eip'
 
         action = ReadRegisterCallable(register)
         idaapi.execute_sync(action, 0)
@@ -257,8 +261,11 @@ class IDAConcreteTarget(ConcreteTarget):
             :rtype int
         """
 
-        if register == 'pc' or register =='rip':
-            register = "eip"
+        if register == 'pc':
+            if idaapi.get_inf_structure().is_64bit():
+                register = 'rip'
+            else:
+                register = 'eip'
 
         action = WriteRegisterCallable(register, value)
         idaapi.execute_sync(action, 0)

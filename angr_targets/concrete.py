@@ -103,22 +103,35 @@ class ConcreteTarget(object):
 
         # saving value of the register which will be used to read segment register
         old_reg_value = self.read_register(result_register)
-        l.debug("exfitration reg %s value %x" % (result_register, old_reg_value))
+        l.debug("exfiltration reg %s value %x" % (result_register, old_reg_value))
 
         # writing to pc shellcode
         self.write_memory(pc, shellcode)
+
         cur_instr_after_write = self.read_memory(pc, len_payload)
         l.debug("current instruction after write %s" % (cur_instr_after_write.encode("hex")))
 
+        l.debug('setting breakpoint at address ' + hex(pc+len_payload))
+
         self.set_breakpoint(pc + len_payload, temporary=True)
         self.run()
+
+        current_pc = self.read_register("pc")
+        l.debug("current pc %x" % (current_pc))
+
         result_value = self.read_register(result_register)
         l.debug("result value %x " % (result_value))
 
         # restoring previous pc
         self.write_register("pc", pc)
+
+        current_pc = self.read_register("pc")
+        l.debug("current pc %x" % (current_pc))
+
+
         # restoring previous instruction
         self.write_memory(pc, old_instr_content)
+
         # restoring previous rax value
         self.write_register(result_register, old_reg_value)
 
