@@ -7,4 +7,4 @@ except ImportError:
 setup(name='angr_targets',
       version='0.1',
       packages=['angr_targets'],
-      install_requires=['avatar2'])
+      )

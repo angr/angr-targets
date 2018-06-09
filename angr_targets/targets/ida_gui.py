@@ -480,8 +480,8 @@ class IDAConcreteTarget(ConcreteTarget):
         self.write_memory(shellcode_address, shellcode)
 
         self.make_unknown(shellcode_address, len_payload)
-
-        for addr in xrange(shellcode_address, shellcode_address+len_payload):
+        print("making code at %s size %s" % (shellcode_address,len_payload))
+        for addr in range(shellcode_address, shellcode_address+len_payload):
             self.make_code(shellcode_address)
 
         # -2 is to avoid the warning from IDA about rip pointing to data and not code
