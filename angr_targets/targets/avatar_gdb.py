@@ -118,6 +118,13 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         if res == -1:
             raise ConcreteBreakpointError("AvatarGDBConcreteTarget failed to set_breakpoint at %x"%(address) )
 
+    def remove_breakpoint(self, address, **kwargs):
+        l.debug("AvatarGDBConcreteTarget remove_breakpoint at %x "%(address))
+        res = self.target.remove_breakpoint(address, **kwargs)
+        if res == -1:
+            raise ConcreteBreakpointError("AvatarGDBConcreteTarget failed to set_breakpoint at %x"%(address) )
+
+
 
     def set_watchpoint(self,address, **kwargs):
         """Inserts a watchpoint
