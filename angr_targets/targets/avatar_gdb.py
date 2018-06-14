@@ -34,7 +34,7 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
             res = self.target.read_memory(address, 1, nbytes, raw=True)
             return res
         except Exception as e:
-            l.warn("AvatarGDBConcreteTarget can't read_memory at address %x exception %s"%(address,e))
+            l.debug("AvatarGDBConcreteTarget can't read_memory at address %x exception %s"%(address,e))
             raise ConcreteMemoryError("AvatarGDBConcreteTarget can't read_memory at address %x exception %s"%(address,e))
 
 

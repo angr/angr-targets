@@ -11,6 +11,6 @@ except Exception:
 
 
 try:
-    from .targets.ida_gui import IDAConcreteTarget
+    from .targets.ida_target import IDAConcreteTarget
 except Exception:
     l.info("Impossible to load IDAConcreteTarget")
