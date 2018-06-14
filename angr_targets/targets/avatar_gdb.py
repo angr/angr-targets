@@ -12,6 +12,7 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
     def __init__(self,architecture, gdbserver_ip, gdbserver_port ):
         # Creation of the avatar-object
         self.avatar = Avatar(arch=architecture)
+        self.architecture = architecture
         self.target = self.avatar.add_target(GDBTarget, gdb_executable="gdb", gdb_ip=gdbserver_ip, gdb_port=gdbserver_port)
         self.avatar.init_targets()
         super(AvatarGDBConcreteTarget,self).__init__()
@@ -64,6 +65,11 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
             :rtype int
             :raise angr.errors.ConcreteRegisterError in case the register doesn't exist or any other exception
         """
+        if register is "pc":
+            if self.architecture is archs.x86.X86:
+                register = "eip"
+            elif self.architecture is archs.x86.X86_64:
+                register = "rip"
 
         try:
             l.debug("AvatarGDBConcreteTarget read_register at %s "%(register))
@@ -91,6 +97,11 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
             :param int value:        int value written to be written register
             :raise angr.errors.ConcreteRegisterError
         """
+        if register is "pc":
+            if self.architecture is archs.x86.X86:
+                register = "eip"
+            elif self.architecture is archs.x86.X86_64:
+                register = "rip"
         try:
             l.debug("AvatarGDBConcreteTarget write_register at %s value %x "%(register,value))
             res = self.target.write_register(register, value)

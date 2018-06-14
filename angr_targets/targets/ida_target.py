@@ -71,9 +71,8 @@ class WriteRegisterCallable:
             self.exception = True
 
 class SetBreakpointCallable:
-    def __init__(self, address, temporary=False, hardware=False, *args, **kwargs):
+    def __init__(self, address, hardware=False, *args, **kwargs):
         self.address = address
-        self.temporary = temporary
         self.hardware = hardware
         self.result = None
         self.exception = False
@@ -87,18 +86,6 @@ class SetBreakpointCallable:
 
             idc.add_bpt(self.address, bp_flag)
             enable_res = idc.enable_bpt(self.address, True)
-
-            if self.temporary:
-                condition = """
-                            enable_bpt(%d,0);
-                            return 1;
-                            """ % (self.address)  # not best solution but works. Tried different approaches:
-                # del_bpt(%d); return True:  got error True is undefined
-                # del_bpt(%d); return 1: breakpoint doesn't stop the execution
-                cond_res = idc.SetBptCnd(self.address, condition)
-
-                l.debug("bp flag value %x  enable_res %s cond_res %s" % (bp_flag, enable_res, cond_res))
-                self.result = enable_res and cond_res  # return False if:m enable or setting condition fails
 
             l.debug("bp flag value %x enable_res %s" % (bp_flag, enable_res))
 
@@ -314,7 +301,7 @@ class IDAConcreteTarget(ConcreteTarget):
             return action.written_bytes
 
 
-    def set_breakpoint(self, address, temporary=False, hardware=False, *args, **kwargs):
+    def set_breakpoint(self, address, hardware=False, *args, **kwargs):
         """Inserts a breakpoint
 
                 :param bool hardware: Hardware breakpoint
@@ -325,7 +312,7 @@ class IDAConcreteTarget(ConcreteTarget):
 
         l.debug("ida target set_breakpoint at %x " % (address))
 
-        action = SetBreakpointCallable(address, temporary, hardware)
+        action = SetBreakpointCallable(address, hardware)
         idaapi.execute_sync(action, 0)
 
         if action.exception:
@@ -344,7 +331,7 @@ class IDAConcreteTarget(ConcreteTarget):
         else:
             return action.result
 
-    def set_watchpoint(self, address, temporary=False, *args, **kwargs):
+    def set_watchpoint(self, address, *args, **kwargs):
         """Inserts a watchpoint which is triggered when a read or a write is executed on address
 
                 :param      address: The name of a variable or an address to watch
@@ -359,18 +346,6 @@ class IDAConcreteTarget(ConcreteTarget):
         idc.set_bpt_attr(address, idc.BPTATTR_SIZE, 1)
         attr_res = idc.set_bpt_attr(address, idc.BPTATTR_TYPE, bp_flag)
         enable_res = idc.enable_bpt(address, True)
-
-
-        if temporary:
-            condition = """
-                        enable_bpt(%d,0);
-                        return 1;
-                       """ % (address)  # not best solution but works. Tried different approaches:
-                                        # del_bpt(%d); return True:  got error True is undefined
-                                        # del_bpt(%d); return 1: breakpoint doesn't stop the execution
-            cond_res = idc.SetBptCnd(address, condition)
-            l.debug("bp flag value %x attr_res %s enable_res %s cond_res %s" % (bp_flag, attr_res, enable_res,cond_res))
-            return attr_res and enable_res and cond_res # return False if: enable or setting attributes or setting condition fails
 
         l.debug("bp flag value %x attr_res %s enable_res %s"%(bp_flag,attr_res,enable_res))
         return attr_res and enable_res # return False if enable or setting attributes fails
