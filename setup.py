@@ -14,5 +14,6 @@ else:
     setup(name='angr_targets',
           version='0.1',
           packages=['angr_targets'],
-          install_requires=['avatar2']
+	  dependency_links=['https://github.com/avatartwo/avatar2/tarball/master#egg=avatar2'],
+	  install_requires=['avatar2']
           )
