@@ -4,7 +4,7 @@ import functools
 import logging
 
 l = logging.getLogger("angr_targets.idagui")
-l.setLevel(logging.DEBUG)
+#l.setLevel(logging.DEBUG)
 
 import threading
 from angr_targets.concrete import ConcreteTarget
