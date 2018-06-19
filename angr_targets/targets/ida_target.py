@@ -1,5 +1,5 @@
 from angr_targets.concrete import ConcreteTarget
-from angr.errors import SimMemoryError, ConcreteRegisterError, ConcreteMemoryError, ConcreteBreakpointError
+from angr.errors import SimMemoryError, SimConcreteRegisterError, SimConcreteMemoryError, SimConcreteBreakpointError
 import functools
 import logging
 
@@ -236,7 +236,7 @@ class IDAConcreteTarget(ConcreteTarget):
         idaapi.execute_sync(action, 0)
 
         if action.exception:
-            raise ConcreteRegisterError
+            raise SimConcreteRegisterError
         else:
             return action.result
 
@@ -258,7 +258,7 @@ class IDAConcreteTarget(ConcreteTarget):
         idaapi.execute_sync(action, 0)
 
         if action.exception:
-            raise ConcreteRegisterError
+            raise SimConcreteRegisterError
         else:
             return action.result
 
@@ -278,7 +278,7 @@ class IDAConcreteTarget(ConcreteTarget):
 
         if action.exception:
             #l.debug("Exception during read!")
-            raise ConcreteMemoryError
+            raise SimConcreteMemoryError
         else:
             return action.result
 
@@ -296,7 +296,7 @@ class IDAConcreteTarget(ConcreteTarget):
         idaapi.execute_sync(action, 0)
 
         if action.exception:
-            raise ConcreteMemoryError
+            raise SimConcreteMemoryError
         else:
             return action.written_bytes
 
@@ -316,7 +316,7 @@ class IDAConcreteTarget(ConcreteTarget):
         idaapi.execute_sync(action, 0)
 
         if action.exception:
-            raise ConcreteBreakpointError
+            raise SimConcreteBreakpointError
         else:
             return action.result
 
@@ -327,7 +327,7 @@ class IDAConcreteTarget(ConcreteTarget):
         idaapi.execute_sync(action, 0)
 
         if action.exception:
-            raise ConcreteBreakpointError
+            raise SimConcreteBreakpointError
         else:
             return action.result
 

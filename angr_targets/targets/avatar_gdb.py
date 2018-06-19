@@ -1,7 +1,11 @@
-from avatar2 import *
-from angr_targets.concrete import ConcreteTarget
-from angr.errors import ConcreteMemoryError, ConcreteRegisterError, ConcreteBreakpointError
 import logging
+
+from avatar2 import *
+
+from angr.errors import SimConcreteMemoryError, SimConcreteRegisterError, SimConcreteBreakpointError
+
+from ..concrete import ConcreteTarget
+
 l = logging.getLogger("angr_targets.avatar_gdb")
 
 #l.setLevel(logging.DEBUG)
@@ -36,7 +40,7 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
             return res
         except Exception as e:
             l.debug("AvatarGDBConcreteTarget can't read_memory at address %x exception %s"%(address,e))
-            raise ConcreteMemoryError("AvatarGDBConcreteTarget can't read_memory at address %x exception %s"%(address,e))
+            raise SimConcreteMemoryError("AvatarGDBConcreteTarget can't read_memory at address %x exception %s" % (address, e))
 
 
     def write_memory(self,address, value, **kwargs):
@@ -51,10 +55,10 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
             res = self.target.write_memory(address, 1, value, raw=True)
             if not res:
                 l.warn("AvatarGDBConcreteTarget failed write_memory at %x value %s"%(address,value))
-                raise ConcreteMemoryError("AvatarGDBConcreteTarget failed write_memory to address %x"%(address))
+                raise SimConcreteMemoryError("AvatarGDBConcreteTarget failed write_memory to address %x" % (address))
         except Exception as e:
             l.warn("AvatarGDBConcreteTarget write_memory at %x value %s exception %s"%(address,value,e))
-            raise ConcreteMemoryError("AvatarGDBConcreteTarget write_memory at %x value %s exception %s"%(address,value,e))
+            raise SimConcreteMemoryError("AvatarGDBConcreteTarget write_memory at %x value %s exception %s" % (address, value, e))
 
    
     def read_register(self,register,**kwargs):
@@ -76,7 +80,7 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
             register_value = self.target.read_register(register)
         except Exception as e:
             l.debug("AvatarGDBConcreteTarget read_register %s exception %s %s "%(register,type(e).__name__,e))
-            raise ConcreteRegisterError("AvatarGDBConcreteTarget can't read register %s exception %s" %(register,e))
+            raise SimConcreteRegisterError("AvatarGDBConcreteTarget can't read register %s exception %s" % (register, e))
         # when accessing xmm registers and ymm register gdb return a list of 4/8 32 bit values
         # which need to be shifted appropriately to create a 128/256 bit value
         if type(register_value) is list:
@@ -107,10 +111,10 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
             res = self.target.write_register(register, value)
             if not res:
                 l.warn("AvatarGDBConcreteTarget write_register failed reg %s value %x "%(register,value))
-                raise ConcreteRegisterError("AvatarGDBConcreteTarget write_register failed reg %s value %x "%(register,value))
+                raise SimConcreteRegisterError("AvatarGDBConcreteTarget write_register failed reg %s value %x " % (register, value))
         except Exception as e:
             l.warn("AvatarGDBConcreteTarget write_register exception write reg %s value %x %s "%(register,value,e))
-            raise ConcreteRegisterError("AvatarGDBConcreteTarget write_register exception write reg %s value %x %s "%(register,value,e))
+            raise SimConcreteRegisterError("AvatarGDBConcreteTarget write_register exception write reg %s value %x %s " % (register, value, e))
 
 
     def set_breakpoint(self,address, **kwargs):
@@ -127,13 +131,13 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         l.debug("AvatarGDBConcreteTarget set_breakpoint at %x "%(address))
         res = self.target.set_breakpoint(address, **kwargs)
         if res == -1:
-            raise ConcreteBreakpointError("AvatarGDBConcreteTarget failed to set_breakpoint at %x"%(address) )
+            raise SimConcreteBreakpointError("AvatarGDBConcreteTarget failed to set_breakpoint at %x" % (address))
 
     def remove_breakpoint(self, address, **kwargs):
         l.debug("AvatarGDBConcreteTarget remove_breakpoint at %x "%(address))
         res = self.target.remove_breakpoint(address, **kwargs)
         if res == -1:
-            raise ConcreteBreakpointError("AvatarGDBConcreteTarget failed to set_breakpoint at %x"%(address) )
+            raise SimConcreteBreakpointError("AvatarGDBConcreteTarget failed to set_breakpoint at %x" % (address))
 
 
 
@@ -148,7 +152,7 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         l.debug("gdb target set_watchpoing at %x value"%(address))
         res = self.target.set_watchpoint(address, **kwargs)
         if res == -1:
-            raise ConcreteBreakpointError("AvatarGDBConcreteTarget failed to set_breakpoint at %x" % (address))
+            raise SimConcreteBreakpointError("AvatarGDBConcreteTarget failed to set_breakpoint at %x" % (address))
 
     def run(self):
         """
