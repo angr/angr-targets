@@ -1,4 +1,5 @@
 import logging
+import os
 
 from avatar2 import *
 
@@ -139,8 +140,6 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         if res == -1:
             raise SimConcreteBreakpointError("AvatarGDBConcreteTarget failed to set_breakpoint at %x" % (address))
 
-
-
     def set_watchpoint(self,address, **kwargs):
         """Inserts a watchpoint
 
@@ -154,12 +153,74 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         if res == -1:
             raise SimConcreteBreakpointError("AvatarGDBConcreteTarget failed to set_breakpoint at %x" % (address))
 
+
+    def get_mappings(self):
+        """Returns the mmap of the concrete process
+        :return:
+        """
+
+        class MemoryMap:
+            """
+            Describing a memory range inside the concrete
+            process.
+            """
+            def __init__(self, start_address, end_address, offset, name):
+                self.start_address = start_address
+                self.end_address = end_address
+                self.offset = offset
+                self.name = name
+
+            def __str__(self):
+                my_str = "MemoryMap[start_address: 0x%x | end_address: 0x%x | name: %s" \
+                      % (self.start_address,
+                         self.end_address,
+                         self.name)
+
+                return my_str
+
+        l.debug("getting the vmmap of the concrete process")
+        mapping_output = self.target.get_mappings()
+
+        mapping_output = mapping_output[1].split("\n")[4:]
+
+        vmmap = []
+
+        for map in mapping_output:
+            map = map.split(" ")
+
+            # removing empty entries
+            map = filter(lambda x: x not in ["\\t", "\\n", ''], map)
+
+            try:
+                map_start_address = map[0].replace("\\n", '')
+                map_start_address = map_start_address.replace("\\t", '')
+                map_start_address = int(map_start_address, 16)
+                map_end_address = map[1].replace("\\n", '')
+                map_end_address = map_end_address.replace("\\t", '')
+                map_end_address = int(map_end_address, 16)
+                offset = map[3].replace("\\n", '')
+                offset = offset.replace("\\t", '')
+                offset = int(offset, 16)
+                map_name = map[4].replace("\\n", '')
+                map_name = map_name.replace("\\t", '')
+                map_name = os.path.basename(map_name)
+            except IndexError, ValueError:
+                l.debug("Can't process this vmmap entry")
+                pass
+
+            vmmap.append(MemoryMap(map_start_address, map_end_address, offset, map_name))
+
+        return vmmap
+
+
     def run(self):
         """
         Resume the execution of the target
         :return:
         """
         l.debug("gdb target run")
+        #pc = self.read_register('pc')
+        #print("Register before resuming:" + hex(pc))
         self.target.cont()
         self.target.wait()
     

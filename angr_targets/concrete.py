@@ -77,6 +77,9 @@ class ConcreteTarget(object):
     def remove_watchpoint(self, address, **kwargs):
         raise NotImplementedError()
 
+    def get_mappings(self):
+        raise NotImplementedError()
+
     def run(self):
         raise NotImplementedError()
 
