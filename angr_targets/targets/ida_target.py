@@ -1,19 +1,15 @@
-from angr_targets.concrete import ConcreteTarget
-from angr.errors import SimMemoryError, SimConcreteRegisterError, SimConcreteMemoryError, SimConcreteBreakpointError
-import functools
 import logging
+import sys
 
-l = logging.getLogger("angr_targets.idagui")
-#l.setLevel(logging.DEBUG)
-
-import threading
-from angr_targets.concrete import ConcreteTarget
 import idaapi
 import idc
 import ida_funcs
 
+from angr.errors import  SimConcreteRegisterError, SimConcreteMemoryError, SimConcreteBreakpointError
+from ..concrete import ConcreteTarget
 
-l = logging.getLogger("angr_targets.idagui")
+
+l = logging.getLogger("angr_targets.idatarget")
 #l.setLevel(logging.DEBUG)
 
 
@@ -30,6 +26,7 @@ class ReadMemoryCallable:
         if not self.result:
             self.exception = True
 
+
 class WriteMemoryCallable:
     def __init__(self, address, value, *args, **kwargs):
         self.address = address
@@ -41,7 +38,8 @@ class WriteMemoryCallable:
         try:
             l.debug("gdb target write memory at %x value %s " % (self.address, self.value.encode("hex")))
             self.written_bytes = idc.write_dbg_memory(self.address, self.value)
-        except Exception:
+        except Exception as e:
+            l.debug("write_memory exception %s"%(e))
             self.exception = True
 
 
@@ -54,8 +52,10 @@ class ReadRegisterCallable:
     def __call__(self):
         try:
             self.result = idc.get_reg_value(self.register)
-        except Exception:
+        except Exception as e:
+            l.debug("read_register exception %s"%(e))
             self.exception = True
+
 
 class WriteRegisterCallable:
     def __init__(self, register, value, *args, **kwargs):
@@ -67,8 +67,10 @@ class WriteRegisterCallable:
     def __call__(self):
         try:
             self.result = idc.set_reg_value(self.value, self.register)
-        except Exception:
+        except Exception as e:
+            l.debug("write_register exception %s"%(e))
             self.exception = True
+
 
 class SetBreakpointCallable:
     def __init__(self, address, hardware=False, *args, **kwargs):
@@ -91,7 +93,8 @@ class SetBreakpointCallable:
 
             self.result = enable_res
 
-        except Exception:
+        except Exception as e:
+            l.debug("set_breakpoint exception %s"%(e))
             self.exception = True
 
 
@@ -110,6 +113,7 @@ class ResumeAndWaitBreakpoint:
         except Exception:
             self.exception = True
 
+
 class DeleteBreakpointCallable:
     def __init__(self, address, *args, **kwargs):
         self.address = address
@@ -119,7 +123,8 @@ class DeleteBreakpointCallable:
     def __call__(self):
         try:
             self.result = idc.del_bpt(self.address)
-        except Exception:
+        except Exception as e:
+            l.debug("remove_breakpoint exception %s"%(e))
             self.exception = True
 
 
@@ -161,7 +166,6 @@ class MakeComment:
             l.debug("Making comment at " + hex(self.address))
             self.result = idc.MakeComm(self.address, self.text)
         except Exception as e:
-            print(e)
             self.exception = True
 
 
@@ -177,6 +181,7 @@ class MakeFunction:
         except Exception:
             self.exception = True
 
+
 class SetLineColor:
     def __init__(self, color, address, *args, **kwargs):
         self.color = color
@@ -187,8 +192,8 @@ class SetLineColor:
         try:
             self.result = idc.SetColor(self.address, idc.CIC_ITEM, self.color)
         except Exception as e:
-            print(e)
             self.exception = True
+
 
 class EditFunctionBoundaries:
     def __init__(self, start_address, end_address, *args, **kwargs):
@@ -206,17 +211,53 @@ class EditFunctionBoundaries:
 
 
 
+
 class IDAConcreteTarget(ConcreteTarget):
 
-    def __init__(self):
-        self.wait_user = threading.Lock()
-        self.wait_user.acquire()
-        self.wait_user_flag = True
+    def __init__(self, headless=False, binary_path=None):
+        '''
+        Initialize the IdaConcreteTarget. Nothing has to be done if the target is used inside the IDA Debugger but when
+        using IDA in headless mode (without the GUI) we need to start the debugger by ourselves.
+        :param :bool headless: headless mode is used when IDA is launched without the GUI
+        :param :str binary_path: optional path to the binary needed only
+        Example
+            To run a script in IDA headless mode use:
+            > idat.exe -c -A -S"angr_script.py" -t
+            > idat -c -A -S"angr_script.py" -t
+        '''
+        self.headless = headless
+
+        if binary_path and not self.headless:
+            l.warn("The binary path is needed only when using IDA in headless mode")
+
+        if self.headless:
+            if binary_path is None:
+                l.warn("You should provide a binary path when running IDA in headless mode")
+                self.exit()
+
+            idc.SetInputFilePath(binary_path)
+            l.debug("Running IDA in headless mode. Initializing the debugger")
+            idaapi.autoWait()
+            if sys.platform is "win32":
+                idc.LoadDebugger("win32", 0)
+            else:
+                idc.LoadDebugger("linux", 0)
+            # entry_point = idc.GetLongPrm(INF_START_IP)
+            # print("adding breakpoint at %x"%(entry_point))
+            idc.SetInputFilePath(binary_path)
+            # idc.AddBpt(entry_point)
+            idc.SetDebuggerOptions(idc.DOPT_START_BPT)
+            idc.StartDebugger("", "", "")
+            idc.ResumeProcess()
+            idc.GetDebuggerEvent(idc.WFNE_SUSP, -1)
+
+            l.debug("Debugger initialized")
 
         super(IDAConcreteTarget, self).__init__()
 
     def exit(self):
-        pass
+        if self.headless:
+            idc.Exit(0)
 
     def read_register(self, register, *args, **kwargs):
         """"
@@ -225,7 +266,6 @@ class IDAConcreteTarget(ConcreteTarget):
             :return: int value of the register content
             :rtype int
         """
-
         if register == 'pc':
             if idaapi.get_inf_structure().is_64bit():
                 register = 'rip'
@@ -234,7 +274,6 @@ class IDAConcreteTarget(ConcreteTarget):
 
         action = ReadRegisterCallable(register)
         idaapi.execute_sync(action, 0)
-
         if action.exception:
             raise SimConcreteRegisterError
         else:
