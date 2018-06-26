@@ -195,7 +195,7 @@ class SetLineColor:
             self.exception = True
 
 
-class GetModuleList:
+class GetMappings:
     def __init__(self, *args, **kwargs):
         self.exception = False
 
@@ -461,7 +461,7 @@ class IDAConcreteTarget(ConcreteTarget):
         else:
             return action.result
 
-    def get_module_list(self):
+    def get_mappings(self):
 
         class MemoryMap:
             """
@@ -481,7 +481,7 @@ class IDAConcreteTarget(ConcreteTarget):
 
                 return my_str
 
-        action = GetModuleList()
+        action = GetMappings()
         idaapi.execute_sync(action, 0)
 
         if action.exception:
