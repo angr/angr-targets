@@ -203,11 +203,11 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
                 map_name = map[4].replace("\\n", '')
                 map_name = map_name.replace("\\t", '')
                 map_name = os.path.basename(map_name)
-            except IndexError, ValueError:
+                vmmap.append(MemoryMap(map_start_address, map_end_address, offset, map_name))
+            except (IndexError, ValueError):
                 l.debug("Can't process this vmmap entry")
                 pass
 
-            vmmap.append(MemoryMap(map_start_address, map_end_address, offset, map_name))
 
         return vmmap
 
