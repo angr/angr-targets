@@ -20,7 +20,7 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         self.architecture = architecture
         self.target = self.avatar.add_target(GDBTarget, gdb_executable="gdb", gdb_ip=gdbserver_ip, gdb_port=gdbserver_port)
         self.avatar.init_targets()
-        super(AvatarGDBConcreteTarget,self).__init__()
+        super(AvatarGDBConcreteTarget, self).__init__()
 
     def exit(self):
         self.avatar.shutdown()
@@ -153,7 +153,6 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         if res == -1:
             raise SimConcreteBreakpointError("AvatarGDBConcreteTarget failed to set_breakpoint at %x" % (address))
 
-
     def get_mappings(self):
         """Returns the mmap of the concrete process
         :return:
@@ -179,7 +178,7 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
                 return my_str
 
         l.debug("getting the vmmap of the concrete process")
-        mapping_output = self.target.get_mappings()
+        mapping_output = self.target.protocols.memory.get_mappings()
 
         mapping_output = mapping_output[1].split("\n")[4:]
 

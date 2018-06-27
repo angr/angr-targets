@@ -399,7 +399,7 @@ class IDAConcreteTarget(ConcreteTarget):
         enable_res = idc.enable_bpt(address, True)
 
         l.debug("bp flag value %x attr_res %s enable_res %s"%(bp_flag,attr_res,enable_res))
-        return attr_res and enable_res # return False if enable or setting attributes fails
+        return attr_res and enable_res  # return False if enable or setting attributes fails
 
 
     def make_unknown(self,address,size):
