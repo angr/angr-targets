@@ -25,7 +25,7 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
     def exit(self):
         self.avatar.shutdown()
 
-    def read_memory(self,address, nbytes, **kwargs):
+    def read_memory(self, address, nbytes, **kwargs):
         """
         Reading from memory of the target
 
@@ -37,7 +37,7 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         """
         try:
             l.debug("AvatarGDBConcreteTarget read_memory at %x "%(address))
-            res = self.target.read_memory(address, 1, nbytes, raw=True)
+            res = self.target.read_memory(address, 1, int(nbytes), raw=True)
             return res
         except Exception as e:
             l.debug("AvatarGDBConcreteTarget can't read_memory at address %x exception %s"%(address,e))
@@ -51,15 +51,15 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
             :param str value:     The actual value written to memory
             :raise angr.errors.ConcreteMemoryError
         """
-        l.debug("AvatarGDBConcreteTarget write_memory at %x value %s "%(address,value.encode("hex")))
+        #l.debug("AvatarGDBConcreteTarget write_memory at %x value %s " %(address, value.encode("hex")))
         try:
             res = self.target.write_memory(address, 1, value, raw=True)
             if not res:
-                l.warn("AvatarGDBConcreteTarget failed write_memory at %x value %s"%(address,value))
+                l.warning("AvatarGDBConcreteTarget failed write_memory at %x value %s"%(address,value))
                 raise SimConcreteMemoryError("AvatarGDBConcreteTarget failed write_memory to address %x" % (address))
         except Exception as e:
-            l.warn("AvatarGDBConcreteTarget write_memory at %x value %s exception %s"%(address,value,e))
-            raise SimConcreteMemoryError("AvatarGDBConcreteTarget write_memory at %x value %s exception %s" % (address, value, e))
+            l.warning("AvatarGDBConcreteTarget write_memory at %x value %s exception %s"%(address,value,e))
+            raise SimConcreteMemoryError("AvatarGDBConcreteTarget write_memory at %x value %s exception %s" % (address, str(value), e))
 
    
     def read_register(self,register,**kwargs):
@@ -111,10 +111,10 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
             l.debug("AvatarGDBConcreteTarget write_register at %s value %x "%(register,value))
             res = self.target.write_register(register, value)
             if not res:
-                l.warn("AvatarGDBConcreteTarget write_register failed reg %s value %x "%(register,value))
+                l.warning("AvatarGDBConcreteTarget write_register failed reg %s value %x "%(register,value))
                 raise SimConcreteRegisterError("AvatarGDBConcreteTarget write_register failed reg %s value %x " % (register, value))
         except Exception as e:
-            l.warn("AvatarGDBConcreteTarget write_register exception write reg %s value %x %s "%(register,value,e))
+            l.warning("AvatarGDBConcreteTarget write_register exception write reg %s value %x %s "%(register,value,e))
             raise SimConcreteRegisterError("AvatarGDBConcreteTarget write_register exception write reg %s value %x %s " % (register, value, e))
 
 
@@ -188,7 +188,7 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
             map = map.split(" ")
 
             # removing empty entries
-            map = filter(lambda x: x not in ["\\t", "\\n", ''], map)
+            map = list(filter(lambda x: x not in ["\\t", "\\n", ''], map))
 
             try:
                 map_start_address = map[0].replace("\\n", '')
