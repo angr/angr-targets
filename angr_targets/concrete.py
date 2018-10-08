@@ -96,15 +96,20 @@ class ConcreteTarget(object):
             result_register = "rax"
             execute_shellcode(target, shellcode, result_register)
         '''
+
+        l.debug("Execute shellcode method!")
+
         len_payload = len(shellcode)
-        l.debug("encoded shellcode  %s len shellcode %s" % (shellcode.encode("hex"), len_payload))
+
+        l.debug("encoded shellcode  %s len shellcode %s" % (str(shellcode), len_payload))
 
         pc = self.read_register("pc")
         l.debug("current pc %x" % (pc))
 
         # save the content of the current instruction
         old_instr_content = self.read_memory(pc, len_payload)
-        l.debug("current instruction %s" % (old_instr_content.encode("hex")))
+
+        l.debug("current instruction %s" % (str(old_instr_content)))
 
         # saving value of the register which will be used to read segment register
         old_reg_value = self.read_register(result_register)
@@ -114,7 +119,7 @@ class ConcreteTarget(object):
         self.write_memory(pc, shellcode)
 
         cur_instr_after_write = self.read_memory(pc, len_payload)
-        l.debug("current instruction after write %s" % (cur_instr_after_write.encode("hex")))
+        l.debug("current instruction after write %s" % (str(cur_instr_after_write)))
 
         l.debug('setting breakpoint at address ' + hex(pc+len_payload))
 
@@ -143,6 +148,6 @@ class ConcreteTarget(object):
         pc = self.read_register("pc")
         eax_value = self.read_register(result_register)
         instr_content = self.read_memory(pc, len_payload)
-        l.debug("pc %x eax value %x instr content %s " % (pc, eax_value, instr_content.encode("hex")))
+        l.debug("pc %x eax value %x instr content %s " % (pc, eax_value, str(instr_content)))
 
         return result_value
