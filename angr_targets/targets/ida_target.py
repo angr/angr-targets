@@ -1,3 +1,9 @@
+'''
+WARNING: this target is now deprecated since IDAPython supports
+only python2.
+'''
+
+
 import logging
 import sys
 import os
