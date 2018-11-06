@@ -18,9 +18,13 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         # Creation of the avatar-object
         self.avatar = Avatar(arch=architecture)
         self.architecture = architecture
-        self.target = self.avatar.add_target(GDBTarget, gdb_executable="gdb", gdb_ip=gdbserver_ip, gdb_port=gdbserver_port)
-        self.avatar.init_targets()
-        super(AvatarGDBConcreteTarget, self).__init__()
+        try:
+            self.target = self.avatar.add_target(GDBTarget, gdb_executable="gdb", gdb_ip=gdbserver_ip, gdb_port=gdbserver_port)
+            self.avatar.init_targets()
+            super(AvatarGDBConcreteTarget, self).__init__()
+        except Exception as e:
+            print(e)
+            
 
     def exit(self):
         self.avatar.shutdown()
