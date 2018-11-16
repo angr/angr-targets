@@ -1,14 +1,14 @@
+
 import logging
 import os
 
 from avatar2 import *
-
 from angr.errors import SimConcreteMemoryError, SimConcreteRegisterError, SimConcreteBreakpointError
+from enum import IntEnum
 
 from ..concrete import ConcreteTarget
 
 l = logging.getLogger("angr_targets.avatar_gdb")
-
 #l.setLevel(logging.DEBUG)
 
 
@@ -21,7 +21,6 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         self.target = self.avatar.add_target(GDBTarget, gdb_executable="gdb", gdb_ip=gdbserver_ip, gdb_port=gdbserver_port)
         self.avatar.init_targets()
         super(AvatarGDBConcreteTarget, self).__init__()
-
 
     def exit(self):
         self.avatar.shutdown()
@@ -52,7 +51,7 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
             :param str value:     The actual value written to memory
             :raise angr.errors.ConcreteMemoryError
         """
-        #l.debug("AvatarGDBConcreteTarget write_memory at %x value %s " %(address, value.encode("hex")))
+        # l.debug("AvatarGDBConcreteTarget write_memory at %x value %s " %(address, value.encode("hex")))
         try:
             res = self.target.write_memory(address, 1, value, raw=True)
             if not res:
@@ -209,20 +208,38 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
                 l.debug("Can't process this vmmap entry")
                 pass
 
-
         return vmmap
 
+    def is_running(self):
+
+        class TargetStates(IntEnum):
+            """
+            Enum copied from avatar target
+            A simple Enum for the different states a target can be in.
+            """
+            CREATED = 0x1
+            INITIALIZED = 0x2
+            STOPPED = 0x4
+            RUNNING = 0x8
+            SYNCING = 0x10
+            EXITED = 0x20
+            NOT_RUNNING = INITIALIZED | STOPPED
+
+        return self.target.get_status() == TargetStates.RUNNING
+
+    def stop(self):
+        self.target.stop()
 
     def run(self):
         """
         Resume the execution of the target
         :return:
         """
-        l.debug("gdb target run")
-        #pc = self.read_register('pc')
-        #print("Register before resuming:" + hex(pc))
-        self.target.cont()
-        self.target.wait()
-    
-
-
+        if not self.is_running():
+            l.debug("gdb target run")
+            #pc = self.read_register('pc')
+            #print("Register before resuming: %#x" % pc)
+            self.target.cont()
+            self.target.wait()
+        else:
+            l.debug("gdb target is running!")

@@ -83,6 +83,9 @@ class ConcreteTarget(object):
     def run(self):
         raise NotImplementedError()
 
+    def stop(self):
+        raise NotImplementedError()
+
     def execute_shellcode(self, shellcode, result_register):
         '''
         Use the methods provided by the ConcreteTarget to inject shellcode in concrete process and get the result of the shellcode in the "result_register" register
@@ -121,7 +124,7 @@ class ConcreteTarget(object):
         cur_instr_after_write = self.read_memory(pc, len_payload)
         l.debug("current instruction after write %s" % (str(cur_instr_after_write)))
 
-        l.debug('setting breakpoint at address ' + hex(pc+len_payload))
+        l.debug('setting breakpoint at address %#x' % (pc+len_payload))
 
         self.set_breakpoint(pc + len_payload, temporary=True)
         self.run()
