@@ -19,7 +19,7 @@ class R2ConcreteTarget(ConcreteTarget):
         super(R2ConcreteTarget, self).__init__()
 
     def exit(self):
-        self.avatar.shutdown()
+        self.r2.quit()
 
     def read_memory(self, address, nbytes, **kwargs):
         """
@@ -31,27 +31,30 @@ class R2ConcreteTarget(ConcreteTarget):
             :rtype: str
             :raise angr.errors.SimMemoryError
         """
-        try:
-            l.debug("R2ConcreteTarget read_memory at %x "%(address))
-            return ''.join(chr(x) for x in self.r2.cmdj('pxj {} @ {}'.format(nbytes, hex(address))))
-        except Exception as e:
-            l.debug("R2ConcreteTarget can't read_memory at address %x exception %s"%(address,e))
-            raise SimConcreteMemoryError("R2ConcreteTarget can't read_memory at address %x exception %s" % (address, e))
+        l.debug("R2ConcreteTarget read_memory at %x "%(address))
+
+        # Check if it's mapped
+        if self.r2.cmd('dm.@{}'.format(hex(address))) == '':
+            error = "R2ConcreteTarget can't read_memory at address {address}. Page is not mapped.".format(address=hex(address))
+            l.error(error)
+            raise SimConcreteMemoryError(error)
+
+        return bytes(self.r2.cmdj('pxj {} @ {}'.format(nbytes, hex(address))))
 
 
     def write_memory(self,address, value, **kwargs):
         """
         Writing to memory of the target
             :param int address:   The address from where the memory-write should start
-            :param str value:     The actual value written to memory
+            :param bytes value:     The actual value written to memory
             :raise angr.errors.ConcreteMemoryError
         """
 
-        # TODO: Too much encode/decode...
+        assert type(value) is bytes, 'write_memory value is actually type {}'.format(type(value))
+
         l.debug("R2ConcreteTarget write_memory at %x value %s " %(address, value))
-        value = value.encode() # to bytes
+
         try:
-            #res = self.target.write_memory(address, 1, value, raw=True)
             self.r2.cmd("w6d {} @ {}".format(b64encode(value).decode(), hex(address)))
             """
             if not res:
@@ -92,9 +95,16 @@ class R2ConcreteTarget(ConcreteTarget):
 
         # XMM
         if register.startswith('xmm'):
-            return (registers[register + 'h'] << 64) + registers[register + 'l']
+            try:
+                return (registers[register + 'h'] << 64) + registers[register + 'l']
+            except KeyError:
+                # This can be somewhat expected... xmm<n> wasn't found
+                l.warn('{} was not found.'.format(register))
+                pass
 
-        l.error('Unhandled register read of %s', register)
+        error = 'Unhandled register read of {}'.format(register)
+        l.error(error)
+        raise SimConcreteRegisterError(error)
 
     def write_register(self, register, value, **kwargs):
         """
@@ -230,23 +240,11 @@ class R2ConcreteTarget(ConcreteTarget):
         return vmmap
 
     def is_running(self):
-
-        class TargetStates(IntEnum):
-            """
-            Enum copied from avatar target
-            A simple Enum for the different states a target can be in.
-            """
-            CREATED = 0x1
-            INITIALIZED = 0x2
-            STOPPED = 0x4
-            RUNNING = 0x8
-            SYNCING = 0x10
-            EXITED = 0x20
-            NOT_RUNNING = INITIALIZED | STOPPED
-
-        return self.target.get_status() == TargetStates.RUNNING
+        return False
+        #return self.target.get_status() == TargetStates.RUNNING
 
     def stop(self):
+        return
         self.target.stop()
 
     def run(self):
@@ -254,6 +252,11 @@ class R2ConcreteTarget(ConcreteTarget):
         Resume the execution of the target
         :return:
         """
+
+        l.debug('R2ConcreteTarget run')
+        self.r2.cmd('dc')
+        return
+
         if not self.is_running():
             l.debug("gdb target run")
             #pc = self.read_register('pc')
@@ -273,3 +276,4 @@ class R2ConcreteTarget(ConcreteTarget):
 
 
 from ..memory_map import MemoryMap
+#from ..target_states import TargetStates
