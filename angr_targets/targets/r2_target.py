@@ -135,14 +135,22 @@ class R2ConcreteTarget(ConcreteTarget):
                 :param optional int thread:    Thread cno in which this breakpoints should be added
                 :raise angr.errors.ConcreteBreakpointError
         """
+
+        if kwargs != {}:
+            l.warn('R2ConcreteTarget set_breakpoint called with extra args "{}". Currently, R2 is not handling these and will set breakpoint as normal software breakpoint.'.format(kwargs))
+
         l.debug("R2ConcreteTarget set_breakpoint at %x "%(address))
         self.r2.cmd('db {}'.format(hex(address)))
+
+        # Sanity check that breakpoint actually got set
         if not any(x for x in self.r2.cmdj('dbj') if x['addr'] == address):
             raise SimConcreteBreakpointError("R2ConcreteTarget failed to set_breakpoint at %x" % (address))
 
     def remove_breakpoint(self, address, **kwargs):
         l.debug("R2ConcreteTarget remove_breakpoint at %x "%(address))
         self.r2.cmd('db-{}'.format(hex(address)))
+
+        # Sanity check that breakpoint got removed
         if any(x for x in self.r2.cmdj('dbj') if x['addr'] == address):        
             raise SimConcreteBreakpointError("R2ConcreteTarget failed to remove_breakpoint at %x" % (address))
 
@@ -154,34 +162,49 @@ class R2ConcreteTarget(ConcreteTarget):
                 :param optional bool read:     Read watchpoint
                 :raise angr.errors.ConcreteBreakpointError
         """
-        l.debug("gdb target set_watchpoing at %x value"%(address))
-        res = self.target.set_watchpoint(address, **kwargs)
-        if res == -1:
+
+        read = kwargs.pop('read', False)
+        write = kwargs.pop('write', False)
+
+        rw_str = ''
+        if read:
+            rw_str += 'r'
+        if write:
+            rw_str += 'w'
+
+        if rw_str == '':
+            error = 'R2ConcreteTarget set_watchpoint invalid watch requested for address {}. Must specify type of watchpoint.'.format(hex(address))
+            l.error(error)
+            raise SimConcreteBreakpointError(error)
+
+        if kwargs != {}:
+            l.warn('R2ConcreteTarget set_watchpoint called with extra args "{}".'.format(kwargs))
+
+        l.debug("R2ConcreteTarget target set_watchpoing at %x value"%(address))
+        self.r2.cmd('dbw {address} {fmt}'.format(address=address, fmt=rw_str))
+
+        # Make sure it got set
+        if not any(x for x in self.r2.cmdj('dbj') if x['addr'] == address and x['hw'] == True):
             raise SimConcreteBreakpointError("R2ConcreteTarget failed to set_breakpoint at %x" % (address))
+
+    def remove_watchpoint(self,address, **kwargs):
+        """Removes a watchpoint
+
+                :param address: The name of a variable or an address to watch
+                :raise angr.errors.ConcreteBreakpointError
+        """
+
+        if kwargs != {}:
+            l.warn('R2ConcreteTarget set_watchpoint called with extra args "{}".'.format(kwargs))
+
+        # R2 treats watch points the same as hw breakpoints. Just passthing this call through.
+        self.remove_breakpoint(address)
+
 
     def get_mappings(self):
         """Returns the mmap of the concrete process
         :return:
         """
-
-        class MemoryMap:
-            """
-            Describing a memory range inside the concrete
-            process.
-            """
-            def __init__(self, start_address, end_address, offset, name):
-                self.start_address = start_address
-                self.end_address = end_address
-                self.offset = offset
-                self.name = name
-
-            def __str__(self):
-                my_str = "MemoryMap[start_address: 0x%x | end_address: 0x%x | name: %s" \
-                      % (self.start_address,
-                         self.end_address,
-                         self.name)
-
-                return my_str
 
         l.debug("getting the vmmap of the concrete process")
         mapping_output = self.target.protocols.memory.get_mappings()
@@ -257,3 +280,6 @@ class R2ConcreteTarget(ConcreteTarget):
     @property
     def bits(self):
         return self.r2.cmdj('iAj')['bins'][0]['bits']
+
+
+from ..memory_map import MemoryMap
