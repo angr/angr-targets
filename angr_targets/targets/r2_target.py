@@ -207,35 +207,25 @@ class R2ConcreteTarget(ConcreteTarget):
         """
 
         l.debug("getting the vmmap of the concrete process")
-        mapping_output = self.target.protocols.memory.get_mappings()
-
-        mapping_output = mapping_output[1].split("\n")[4:]
+        sections = self.r2.cmdj('dmj')
+        files = self.r2.cmdj('dmmj')
 
         vmmap = []
 
-        for map in mapping_output:
-            map = map.split(" ")
+        for section in sections:
 
-            # removing empty entries
-            map = list(filter(lambda x: x not in ["\\t", "\\n", ''], map))
+            map_start_address = section['addr']
+            map_end_address = section['addr_end']
 
             try:
-                map_start_address = map[0].replace("\\n", '')
-                map_start_address = map_start_address.replace("\\t", '')
-                map_start_address = int(map_start_address, 16)
-                map_end_address = map[1].replace("\\n", '')
-                map_end_address = map_end_address.replace("\\t", '')
-                map_end_address = int(map_end_address, 16)
-                offset = map[3].replace("\\n", '')
-                offset = offset.replace("\\t", '')
-                offset = int(offset, 16)
-                map_name = map[4].replace("\\n", '')
-                map_name = map_name.replace("\\t", '')
-                map_name = os.path.basename(map_name)
-                vmmap.append(MemoryMap(map_start_address, map_end_address, offset, map_name))
-            except (IndexError, ValueError):
-                l.debug("Can't process this vmmap entry")
-                pass
+                file_map = next(x for x in files if x['file'] == section['file'])
+                offset = map_start_address - file_map['addr']
+
+            except:
+                offset = 0
+
+            map_name = section['file']
+            vmmap.append(MemoryMap(map_start_address, map_end_address, offset, map_name))
 
         return vmmap
 
