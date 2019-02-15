@@ -9,6 +9,11 @@ try:
 except Exception as e:
     l.error("Impossible to load AvatarGDBConcreteTarget exception %s"%(e))
 
+try:
+    from .targets.r2_target import R2ConcreteTarget
+except Exception as e:
+    l.error("Impossible to load R2ConcreteTarget exception %s"%(e))
+
 '''
 try:
     from .targets.ida_target import IDAConcreteTarget
