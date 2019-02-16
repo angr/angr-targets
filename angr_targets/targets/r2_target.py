@@ -90,17 +90,17 @@ class R2ConcreteTarget(ConcreteTarget):
 
         if register in registers:
             return registers[register]
-        # when accessing xmm registers and ymm register gdb return a list of 4/8 32 bit values
-        # which need to be shifted appropriately to create a 128/256 bit value
 
         # XMM
         if register.startswith('xmm'):
             try:
-                return (registers[register + 'h'] << 64) + registers[register + 'l']
+                return (registers[register + 'l'] << 64) + registers[register + 'h']
             except KeyError:
                 # This can be somewhat expected... xmm<n> wasn't found
                 l.warn('{} was not found.'.format(register))
                 pass
+
+        # R2 Currently also has a bug with floating point registers being shown incorrectly: https://github.com/radare/radare2/issues/13118
 
         error = 'Unhandled register read of {}'.format(register)
         l.error(error)
@@ -132,6 +132,12 @@ class R2ConcreteTarget(ConcreteTarget):
 
         l.debug("R2ConcreteTarget write_register at %s value %x "%(register,value))
         self.r2.cmd('dr {}={}'.format(register, value))
+
+        # Validate write
+        if self.read_register(register) != value:
+            error = "R2ConcreteTarget write_register failed to correctly set register {}={}".format(register, hex(value))
+            l.error(error)
+            raise SimConcreteRegisterError(error)
 
 
     def set_breakpoint(self,address, **kwargs):
@@ -240,12 +246,12 @@ class R2ConcreteTarget(ConcreteTarget):
         return vmmap
 
     def is_running(self):
+        # This implementation is synchronous. We will not be running if this call is being made.
         return False
-        #return self.target.get_status() == TargetStates.RUNNING
 
     def stop(self):
+        # This implementation is synchronous. We will not be running if this call is being made.
         return
-        self.target.stop()
 
     def run(self):
         """
@@ -255,16 +261,6 @@ class R2ConcreteTarget(ConcreteTarget):
 
         l.debug('R2ConcreteTarget run')
         self.r2.cmd('dc')
-        return
-
-        if not self.is_running():
-            l.debug("gdb target run")
-            #pc = self.read_register('pc')
-            #print("Register before resuming: %#x" % pc)
-            self.target.cont()
-            self.target.wait()
-        else:
-            l.debug("gdb target is running!")
 
     @property
     def architecture(self):
@@ -276,4 +272,3 @@ class R2ConcreteTarget(ConcreteTarget):
 
 
 from ..memory_map import MemoryMap
-#from ..target_states import TargetStates
