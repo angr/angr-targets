@@ -108,6 +108,26 @@ def test_r2_target_linux_x64_read_write_memory():
     
     r2db.exit()
 
+def test_r2_target_linux_x64_watchpoints():
+    r2 = r2pipe.open(binary_x64, ['-d'])
+    r2db = R2ConcreteTarget(r2)
+
+    proj = angr.Project(r2.cmdj('ij')['core']['file'], concrete_target=r2db, use_sim_procedures=True)
+    simgr = proj.factory.simulation_manager()
+    simgr.use_technique(angr.exploration_techniques.Symbion(find=[0x0040113c]))
+    simgr.run()
+
+    nose.tools.assert_true(len(simgr.found) == 1)
+    state = simgr.found[0]
+
+    # Test watching for memory read access
+    r2db.set_watchpoint(state.solver.eval(state.regs.rbp-0xa), write=True)
+
+    # TODO: Watchpoint in this manner is currently broken in r2: https://github.com/radare/radare2/issues/13123
+    # Update test once r2 fixes this.
+
+    r2db.exit()
+
 
 def run_all():
     functions = globals()
