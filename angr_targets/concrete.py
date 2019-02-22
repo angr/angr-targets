@@ -17,7 +17,7 @@ class ConcreteTarget(object):
             :param int address: The address to read from
             :param int nbytes:  The amount number of bytes to read
             :return:        The memory read
-            :rtype: str
+            :rtype: bytes
             :raise angr.errors.ConcreteMemoryError
         """
         raise NotImplementedError()
