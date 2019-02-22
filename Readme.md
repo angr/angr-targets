@@ -20,7 +20,8 @@ The angr concrete target needs to implement the ConcreteTarget interface which m
 In the ConcreteTarget class docstrings you can find the detailed definition of the methods and the types of arguments/return values
 
 Currently we have implemented 2 targets:
-- **AvatarGDBTarget**: Connects to a gdbserver instance which is running the process to synchronize the state with. 
+- **AvatarGDBTarget**: Connects to a gdbserver instance which is running the process to synchronize the state with.
+- **RadareTarget**: Connects to a r2 instance.
 - **IDAConcreteTarget**: Uses the memory backend provided by the IDA Pro debugger.
 
 ## Install
