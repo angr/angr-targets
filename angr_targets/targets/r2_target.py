@@ -6,7 +6,6 @@ from base64 import b64encode, b64decode
 from angr.errors import SimConcreteMemoryError, SimConcreteRegisterError, SimConcreteBreakpointError
 
 from ..concrete import ConcreteTarget
-import r2pipe
 
 l = logging.getLogger("angr_targets.r2")
 l.setLevel(logging.DEBUG)
