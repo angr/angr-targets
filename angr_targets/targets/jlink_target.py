@@ -23,6 +23,7 @@ class JLinkConcreteTarget(ConcreteTarget):
     def _update_reg_table(self):
         # Stupid JLink and its stupid register scheme...
         self.reg_table = {}
+        self.reg_num_to_name = {}
         altname_re = re.compile(r'(\S+) \((\S+)\)')
         for rn in self.jlink.register_list():
             name = self.jlink.register_name(rn)
@@ -34,6 +35,7 @@ class JLinkConcreteTarget(ConcreteTarget):
                 self.reg_table[name2] = rn
             else:
                 self.reg_table[name.lower()] = rn
+        self.reg_num_to_name = {v: k for k, v in self.reg_table.items()}
 
     def exit(self):
         self.jlink.close()
@@ -51,7 +53,7 @@ class JLinkConcreteTarget(ConcreteTarget):
         l.debug("JLinkConcreteTarget read_memory at %x "%(address))
 
         try:
-            bs = self.jlink.memory_read(addr, nbytes)
+            bs = self.jlink.memory_read(address, nbytes)
         except pylink.JLinkException:
             raise SimConcreteMemoryError(error)
 
@@ -91,6 +93,12 @@ class JLinkConcreteTarget(ConcreteTarget):
             return self.jlink.register_read(rn)
         except pylink.JLinkException:
             l.exception("Error reading register %s", register)
+
+    def read_all_registers(self):
+        rnl = self.jlink.register_list()
+        rvl = self.jlink.register_read_multiple(rnl)
+        regs = {self.reg_num_to_name[x]: y for x, y in zip(rnl, rvl)}
+        return regs
 
     def write_register(self, register, value, **kwargs):
         """
@@ -174,9 +182,12 @@ class JLinkConcreteTarget(ConcreteTarget):
 
     def reset(self, halt=False):
         self.jlink.reset(halt=halt)
-        
+
     def is_running(self):
         return self.jlink.halted() is False
+
+    def step(self):
+        self.jlink.step()
 
     def stop(self):
         self.jlink.halt()
