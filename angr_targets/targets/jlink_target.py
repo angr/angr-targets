@@ -50,7 +50,6 @@ class JLinkConcreteTarget(ConcreteTarget):
             :rtype: str
             :raise angr.errors.SimMemoryError
         """
-        l.debug("JLinkConcreteTarget read_memory at %x "%(address))
 
         try:
             bs = self.jlink.memory_read(address, nbytes)
@@ -69,7 +68,6 @@ class JLinkConcreteTarget(ConcreteTarget):
 
         assert type(value) is bytes, 'write_memory value is actually type {}'.format(type(value))
 
-        l.debug("JLinkConcreteTarget write_memory at %x value %s " %(address, value))
 
         try:
             self.jlink.memory_write(address, value)
