@@ -120,7 +120,37 @@ class ConcreteTarget(object):
     def run(self):
         raise NotImplementedError()
 
+    def is_running(self):
+        raise NotImplementedError()
+
     def stop(self):
+        raise NotImplementedError()
+
+    def wait_for_running(self):
+        """
+        Block until the target is running
+        :return:
+        """
+        # NOTE: This is a default implementation.  You should probably override it
+        while not self.is_running():
+            pass
+
+    def wait_for_halt(self):
+        """
+        Block until the target is halted.
+        :return:
+        """
+        # NOTE: This is a default implementation. Please override it
+        while self.is_running():
+            pass
+
+    def wait_for_breakpoint(self, which=None):
+        """
+
+        :param which: integer address of the breakpoint to wait for
+        :return:
+        """
+        # NOTE: We can't implement this by default since targets don't track their own breakpoints
         raise NotImplementedError()
 
     def execute_shellcode(self, shellcode, result_register):

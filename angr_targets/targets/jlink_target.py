@@ -3,9 +3,9 @@ import logging
 from angr.errors import SimConcreteMemoryError, SimConcreteRegisterError, SimConcreteBreakpointError
 import re
 from ..concrete import ConcreteTarget
-
+from threading import Thread, Event
+from time import sleep
 l = logging.getLogger("jlink_target")
-l.setLevel(logging.DEBUG)
 
 try:
     import pylink
@@ -13,12 +13,55 @@ except ImportError:
     pylink = None
 
 
+class JLinkTargetStatusThread(Thread):
+
+    def __init__(self, target):
+        self.target = target
+        self._shutdown = Event()
+        Thread.__init__(self)
+
+    def shutdown(self):
+        self._shutdown.set()
+
+    def run(self):
+        self._shutdown.clear()
+        while not self._shutdown.is_set():
+            if self.target.jlink.halted():
+                if self.target.cpu_running_event.is_set():
+                    print("Stop!")
+                    self.target.cpu_running_event.clear()
+
+                    for reason in self.target.jlink.cpu_halt_reasons():
+                        if reason.code_breakpoint():
+                            self.target.breakpoint_event.set()
+                        elif reason.data_breakpoint():
+                            self.target.watchpoint_event.set()
+                        elif reason.dbgrq():
+                            pass  # Human debug request
+            elif not self.target.cpu_running_event.is_set():
+                print("Go!")
+                self.target.cpu_running_event.set()
+                self.target.breakpoint_event.clear()
+                self.target.watchpoint_event.clear()
+            sleep(0.05)  # Keep the network packets down
+
+
 class JLinkConcreteTarget(ConcreteTarget):
-   
+
     def __init__(self, jlink):
         self.jlink = jlink
+        self.cpu_running_event = Event()
+        self.breakpoint_event = Event()
+        self.watchpoint_event = Event()
         super(JLinkConcreteTarget, self).__init__()
         self._update_reg_table()
+        self._status_thread = JLinkTargetStatusThread(self)
+        self._status_thread.start()
+        while (self.jlink.halted() and self.cpu_running_event.is_set()) or ((not self.jlink.halted()) and not self.cpu_running_event.is_set()):
+            print(repr(self.cpu_running_event.is_set()), repr(self.jlink.halted()))
+
+    def __del__(self):
+        self._status_thread.shutdown()
 
     def _update_reg_table(self):
         # Stupid JLink and its stupid register scheme...
@@ -38,6 +81,7 @@ class JLinkConcreteTarget(ConcreteTarget):
         self.reg_num_to_name = {v: k for k, v in self.reg_table.items()}
 
     def exit(self):
+        self._status_thread.shutdown()
         self.jlink.close()
 
     def read_memory(self, address, nbytes, **kwargs):
@@ -52,6 +96,8 @@ class JLinkConcreteTarget(ConcreteTarget):
         """
 
         try:
+            if self.cpu_running_event.is_set():
+                pylink.JLinkException()
             bs = self.jlink.memory_read(address, nbytes)
         except pylink.JLinkException:
             raise SimConcreteMemoryError(error)
@@ -126,12 +172,8 @@ class JLinkConcreteTarget(ConcreteTarget):
                 :raise angr.errors.ConcreteBreakpointError
         """
 
-        if kwargs != {}:
-            l.warning('JLinkConcreteTarget set_breakpoint called with extra args "{}". Currently, R2 is not handling these and will set breakpoint as normal software breakpoint.'.format(kwargs))
-
-        l.debug("JLinkConcreteTarget set_breakpoint at %x "%(address))
         try:
-            self.jlink.breakpoint_set(addr)
+            self.jlink.breakpoint_set(address)
         except pylink.JLinkException:
             l.exception("Error setting breakpoint at %#08x", address)
             raise SimConcreteBreakpointError()
@@ -141,6 +183,12 @@ class JLinkConcreteTarget(ConcreteTarget):
         if bn == 0:
             raise SimConcreteBreakpointError("Breakpoint does not exist!")
         self.jlink.breakpoint_clear(bn)
+
+    def wait_for_breakpoint(self):
+        self.breakpoint_event.wait()
+        return
+
+
 
     def set_watchpoint(self,address, **kwargs):
         """Inserts a watchpoint
@@ -182,7 +230,7 @@ class JLinkConcreteTarget(ConcreteTarget):
         self.jlink.reset(halt=halt)
 
     def is_running(self):
-        return self.jlink.halted() is False
+        return self.cpu_running_event.is_set()
 
     def step(self):
         self.jlink.step()
@@ -192,12 +240,21 @@ class JLinkConcreteTarget(ConcreteTarget):
         if not self.jlink.halted():
             raise SimConcreteBreakpointError("Failed to halt target!")
 
+    def wait_for_halt(self):
+        while not self.cpu_running_event.is_set():
+            pass
+
+    def wait_for_running(self):
+        self.cpu_running_event.wait()
+
     def run(self):
         """
         Resume the execution of the target
         :return:
         """
+
         self.jlink.restart()
+        self.cpu_running_event.set()
 
     @property
     def architecture(self):
