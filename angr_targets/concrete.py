@@ -5,7 +5,7 @@ l = logging.getLogger("angr_targets.concrete")
 class ConcreteTarget(object):
     """
     Concrete target used inside the SimConcreteEngine.
-    This object is defined in the Angr script.
+    This object is defined in the angr script.
     """
     def __init__(self):
         self.timeout = None
@@ -14,20 +14,22 @@ class ConcreteTarget(object):
     def read_memory(self, address,nbytes, **kwargs):
         """
         Reading from memory of the target
-            :param int address: The address to read from
-            :param int nbytes:  The amount number of bytes to read
-            :return:        The memory read
-            :rtype: bytes
-            :raise angr.errors.ConcreteMemoryError
+
+        :param int address: The address to read from
+        :param int nbytes:  The amount number of bytes to read
+        :return:        The memory read
+        :rtype: bytes
+        :raise angr.errors.ConcreteMemoryError:
         """
         raise NotImplementedError()
 
     def write_memory(self, address, value, **kwargs):
         """
         Writing to memory of the target
-            :param int address:   The address from where the memory-write should start
-            :param str value:     The actual value written to memory
-            :raise angr.errors.ConcreteMemoryError
+
+        :param int address:   The address from where the memory-write should start
+        :param str value:     The actual value written to memory
+        :raise angr.errors.ConcreteMemoryError:
         """
         raise NotImplementedError()
 
@@ -35,10 +37,11 @@ class ConcreteTarget(object):
         """"
         Reads a register from the target
         Special register "pc" should be treated accordingly to the architecture (eip,rip)
-            :param str register: The name of the register
-            :return: int value of the register content
-            :rtype int
-            :raise angr.errors.ConcreteRegisterError in case the register doesn't exist or any other exception
+
+        :param str register: The name of the register
+        :return: int value of the register content
+        :rtype int
+        :raise angr.errors.ConcreteRegisterError: in case the register doesn't exist or any other exception
         """
         raise NotImplementedError()
 
@@ -46,17 +49,21 @@ class ConcreteTarget(object):
         """
         Writes a register to the target
         Special register "pc" should be treated accordingly to the architecture (eip,rip)
-            :param str register:     The name of the register
-            :param int value:        int value written to be written register
-            :raise angr.errors.ConcreteRegisterError
+
+        :param str register:     The name of the register
+        :param int value:        int value written to be written register
+        :raise angr.errors.ConcreteRegisterError:
         """
         raise NotImplementedError()
 
     def set_breakpoint(self, address, **kwargs):
-        """Inserts a breakpoint
-            :param optional bool hardware: Hardware breakpoint
-            :param optional bool temporary:  Tempory breakpoint
-            :raise angr.errors.ConcreteBreakpointError
+        """
+        Inserts a breakpoint
+
+        :param int address: The address at which to set the breakpoint
+        :param optional bool hardware: Hardware breakpoint
+        :param optional bool temporary:  Tempory breakpoint
+        :raise angr.errors.ConcreteBreakpointError:
         """
         raise NotImplementedError()
 
@@ -64,14 +71,14 @@ class ConcreteTarget(object):
         raise NotImplementedError()
 
     def set_watchpoint(self, address, **kwargs):
-        '''
+        """
         Inserts a watchpoint
 
-            :param address: The name of a variable or an address to watch
-            :param optional bool write:    Write watchpoint
-            :param optional bool read:     Read watchpoint
-            :raise angr.errors.ConcreteBreakpointError
-        '''
+        :param address: The name of a variable or an address to watch
+        :param optional bool write:    Write watchpoint
+        :param optional bool read:     Read watchpoint
+        :raise angr.errors.ConcreteBreakpointError:
+        """
         raise NotImplementedError()
 
     def remove_watchpoint(self, address, **kwargs):
@@ -87,18 +94,20 @@ class ConcreteTarget(object):
         raise NotImplementedError()
 
     def execute_shellcode(self, shellcode, result_register):
-        '''
+        """
         Use the methods provided by the ConcreteTarget to inject shellcode in concrete process and get the result of the shellcode in the "result_register" register
 
         :param concrete_target: ConcreteTarget where the shellcode will be injected
         :param shellcode: shellcode to be executed
         :param result_register: register which will contain the result
         :return: value contained in the result_register
+
         Example read fs[0] value on x64
+
             shellcode = "\x64\x48\x8B\x04\x25\x00\x00\x00\x00"    # mov rax, fs:[0]
             result_register = "rax"
             execute_shellcode(target, shellcode, result_register)
-        '''
+       """
 
         l.debug("Execute shellcode method!")
 

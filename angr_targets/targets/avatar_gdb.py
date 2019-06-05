@@ -26,15 +26,6 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         self.avatar.shutdown()
 
     def read_memory(self, address, nbytes, **kwargs):
-        """
-        Reading from memory of the target
-
-            :param int address: The address to read from
-            :param int nbytes:  The amount number of bytes to read
-            :return:        The memory read
-            :rtype: str
-            :raise angr.errors.SimMemoryError
-        """
         try:
             l.debug("AvatarGDBConcreteTarget read_memory at %x "%(address))
             res = self.target.read_memory(address, 1, int(nbytes), raw=True)
@@ -45,12 +36,6 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
 
 
     def write_memory(self,address, value, **kwargs):
-        """
-        Writing to memory of the target
-            :param int address:   The address from where the memory-write should start
-            :param str value:     The actual value written to memory
-            :raise angr.errors.ConcreteMemoryError
-        """
         # l.debug("AvatarGDBConcreteTarget write_memory at %x value %s " %(address, value.encode("hex")))
         try:
             res = self.target.write_memory(address, 1, value, raw=True)
@@ -63,13 +48,6 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
 
    
     def read_register(self,register,**kwargs):
-        """"
-        Reads a register from the target
-            :param str register: The name of the register
-            :return: int value of the register content
-            :rtype int
-            :raise angr.errors.ConcreteRegisterError in case the register doesn't exist or any other exception
-        """
         if register is "pc":
             if self.architecture is archs.x86.X86:
                 register = "eip"
@@ -96,12 +74,6 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
             return register_value
 
     def write_register(self, register, value, **kwargs):
-        """
-        Writes a register to the target
-            :param str register:     The name of the register
-            :param int value:        int value written to be written register
-            :raise angr.errors.ConcreteRegisterError
-        """
         if register is "pc":
             if self.architecture is archs.x86.X86:
                 register = "eip"
@@ -119,15 +91,17 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
 
 
     def set_breakpoint(self,address, **kwargs):
-        """Inserts a breakpoint
+        """
+        Inserts a breakpoint
 
-                :param optional bool hardware: Hardware breakpoint
-                :param optional bool temporary:  Tempory breakpoint
-                :param optional str regex:     If set, inserts breakpoints matching the regex
-                :param optional str condition: If set, inserts a breakpoint with the condition
-                :param optional int ignore_count: Amount of times the bp should be ignored
-                :param optional int thread:    Thread cno in which this breakpoints should be added
-                :raise angr.errors.ConcreteBreakpointError
+        :param int address: The address at which to set the breakpoint
+        :param optional bool hardware: Hardware breakpoint
+        :param optional bool temporary:  Tempory breakpoint
+        :param optional str regex:     If set, inserts breakpoints matching the regex
+        :param optional str condition: If set, inserts a breakpoint with the condition
+        :param optional int ignore_count: Amount of times the bp should be ignored
+        :param optional int thread:    Thread cno in which this breakpoints should be added
+        :raise angr.errors.ConcreteBreakpointError:
         """
         l.debug("AvatarGDBConcreteTarget set_breakpoint at %x "%(address))
         res = self.target.set_breakpoint(address, **kwargs)
@@ -141,21 +115,22 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
             raise SimConcreteBreakpointError("AvatarGDBConcreteTarget failed to set_breakpoint at %x" % (address))
 
     def set_watchpoint(self,address, **kwargs):
-        """Inserts a watchpoint
-
-                :param address: The name of a variable or an address to watch
-                :param optional bool write:    Write watchpoint
-                :param optional bool read:     Read watchpoint
-                :raise angr.errors.ConcreteBreakpointError
         """
-        l.debug("gdb target set_watchpoing at %x value"%(address))
+        Inserts a watchpoint
+
+        :param address: The name of a variable or an address to watch
+        :param optional bool write:    Write watchpoint
+        :param optional bool read:     Read watchpoint
+        :raise angr.errors.ConcreteBreakpointError
+        """
+        l.debug("gdb target set_watchpoing at %x value", address)
         res = self.target.set_watchpoint(address, **kwargs)
         if res == -1:
             raise SimConcreteBreakpointError("AvatarGDBConcreteTarget failed to set_breakpoint at %x" % (address))
 
     def get_mappings(self):
-        """Returns the mmap of the concrete process
-        :return:
+        """
+        Returns the mmap of the concrete process
         """
 
         class MemoryMap:
@@ -233,7 +208,6 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
     def run(self):
         """
         Resume the execution of the target
-        :return:
         """
         if not self.is_running():
             l.debug("gdb target run")
