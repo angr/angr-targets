@@ -18,8 +18,9 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         # Creation of the avatar-object
         self.avatar = Avatar(arch=architecture)
         self.architecture = architecture
-        self.target = self.avatar.add_target(GDBTarget, gdb_executable="gdb", gdb_ip=gdbserver_ip, gdb_port=gdbserver_port)
+        self.target = self.avatar.add_target(GDBTarget, gdb_executable="gdb-multiarch", gdb_ip=gdbserver_ip, gdb_port=gdbserver_port)
         self.avatar.init_targets()
+        self.page_size = 0x1000  # I want this to be passed by the project in a clean way..
         super(AvatarGDBConcreteTarget, self).__init__()
 
     def exit(self):
@@ -37,12 +38,20 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         """
         try:
             l.debug("AvatarGDBConcreteTarget read_memory at %x "%(address))
+
+            zero_bit = bin(self.page_size).count("0") - 1
+            mask = (1 << zero_bit) - 1
+            base_address = address & (~mask)
+            last_address = base_address + self.page_size
+
+            if address + nbytes > last_address:
+                nbytes = last_address - address
+
             res = self.target.read_memory(address, 1, int(nbytes), raw=True)
             return res
         except Exception as e:
             l.debug("AvatarGDBConcreteTarget can't read_memory at address %x exception %s"%(address,e))
             raise SimConcreteMemoryError("AvatarGDBConcreteTarget can't read_memory at address %x exception %s" % (address, e))
-
 
     def write_memory(self,address, value, **kwargs):
         """
@@ -55,10 +64,10 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         try:
             res = self.target.write_memory(address, 1, value, raw=True)
             if not res:
-                l.warning("AvatarGDBConcreteTarget failed write_memory at %x value %s"%(address,value))
+                l.warning("AvatarGDBConcreteTarget failed write_memory at %x value %s" % (address,value))
                 raise SimConcreteMemoryError("AvatarGDBConcreteTarget failed write_memory to address %x" % (address))
         except Exception as e:
-            l.warning("AvatarGDBConcreteTarget write_memory at %x value %s exception %s"%(address,value,e))
+            l.warning("AvatarGDBConcreteTarget write_memory at %x value %s exception %s" % (address, value, e))
             raise SimConcreteMemoryError("AvatarGDBConcreteTarget write_memory at %x value %s exception %s" % (address, str(value), e))
 
    
@@ -229,6 +238,9 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
 
     def stop(self):
         self.target.stop()
+
+    def shutdown(self):
+        self.target.shutdown()
 
     def run(self):
         """
