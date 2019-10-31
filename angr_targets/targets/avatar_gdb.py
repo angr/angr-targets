@@ -58,12 +58,6 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
 
    
     def read_register(self,register,**kwargs):
-        if register is "pc":
-            if self.architecture is archs.x86.X86:
-                register = "eip"
-            elif self.architecture is archs.x86.X86_64:
-                register = "rip"
-
         try:
             l.debug("AvatarGDBConcreteTarget read_register at %s "%(register))
             register_value = self.target.read_register(register)
@@ -84,11 +78,6 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
             return register_value
 
     def write_register(self, register, value, **kwargs):
-        if register is "pc":
-            if self.architecture is archs.x86.X86:
-                register = "eip"
-            elif self.architecture is archs.x86.X86_64:
-                register = "rip"
         try:
             l.debug("AvatarGDBConcreteTarget write_register at %s value %x "%(register,value))
             res = self.target.write_register(register, value)

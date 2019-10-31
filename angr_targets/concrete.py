@@ -36,7 +36,6 @@ class ConcreteTarget(object):
     def read_register(self, register, **kwargs):
         """"
         Reads a register from the target
-        Special register "pc" should be treated accordingly to the architecture (eip,rip)
 
         :param str register: The name of the register
         :return: int value of the register content
@@ -48,7 +47,6 @@ class ConcreteTarget(object):
     def write_register(self, register, value, **kwargs):
         """
         Writes a register to the target
-        Special register "pc" should be treated accordingly to the architecture (eip,rip)
 
         :param str register:     The name of the register
         :param int value:        int value written to be written register
