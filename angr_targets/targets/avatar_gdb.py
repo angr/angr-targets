@@ -8,6 +8,7 @@ from enum import IntEnum
 
 from ..concrete import ConcreteTarget
 from ..memory_map import MemoryMap
+from ..target_states import TargetStates
 
 l = logging.getLogger("angr_targets.avatar_gdb")
 #l.setLevel(logging.DEBUG)
@@ -163,20 +164,6 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         return vmmap
 
     def is_running(self):
-
-        class TargetStates(IntEnum):
-            """
-            Enum copied from avatar target
-            A simple Enum for the different states a target can be in.
-            """
-            CREATED = 0x1
-            INITIALIZED = 0x2
-            STOPPED = 0x4
-            RUNNING = 0x8
-            SYNCING = 0x10
-            EXITED = 0x20
-            NOT_RUNNING = INITIALIZED | STOPPED
-
         return self.target.get_status() == TargetStates.RUNNING
 
     def stop(self):
