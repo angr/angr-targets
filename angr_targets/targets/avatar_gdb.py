@@ -7,6 +7,7 @@ from angr.errors import SimConcreteMemoryError, SimConcreteRegisterError, SimCon
 from enum import IntEnum
 
 from ..concrete import ConcreteTarget
+from ..memory_map import MemoryMap
 
 l = logging.getLogger("angr_targets.avatar_gdb")
 #l.setLevel(logging.DEBUG)
@@ -141,25 +142,6 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         """
         Returns the mmap of the concrete process
         """
-
-        class MemoryMap:
-            """
-            Describing a memory range inside the concrete
-            process.
-            """
-            def __init__(self, start_address, end_address, offset, name):
-                self.start_address = start_address
-                self.end_address = end_address
-                self.offset = offset
-                self.name = name
-
-            def __str__(self):
-                my_str = "MemoryMap[start_address: 0x%x | end_address: 0x%x | name: %s" \
-                      % (self.start_address,
-                         self.end_address,
-                         self.name)
-
-                return my_str
 
         l.debug("getting the vmmap of the concrete process")
         mapping_output = self.target.protocols.memory.get_mappings()

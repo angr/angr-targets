@@ -14,6 +14,7 @@ import ida_funcs
 
 from angr.errors import  SimConcreteRegisterError, SimConcreteMemoryError, SimConcreteBreakpointError
 from ..concrete import ConcreteTarget
+from ..memory_map import MemoryMap
 
 
 l = logging.getLogger("angr_targets.idatarget")
@@ -469,24 +470,6 @@ class IDAConcreteTarget(ConcreteTarget):
             return action.result
 
     def get_mappings(self):
-
-        class MemoryMap:
-            """
-            Describing a memory range inside the concrete
-            process.
-            """
-            def __init__(self, start_address, end_address, name):
-                self.start_address = start_address
-                self.end_address = end_address
-                self.name = os.path.basename(name)
-
-            def __str__(self):
-                my_str = "MemoryMap[start_address: 0x%x | end_address: 0x%x | name: %s" \
-                      % (self.start_address,
-                         self.start_address + self.end_address,
-                         self.name)
-
-                return my_str
 
         action = GetMappings()
         idaapi.execute_sync(action, 0)
