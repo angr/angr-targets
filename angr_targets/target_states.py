@@ -1,3 +1,4 @@
+from enum import IntEnum
 
 class TargetStates(IntEnum):
     """

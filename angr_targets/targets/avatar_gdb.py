@@ -4,7 +4,6 @@ import os
 
 from avatar2 import *
 from angr.errors import SimConcreteMemoryError, SimConcreteRegisterError, SimConcreteBreakpointError
-from enum import IntEnum
 
 from ..concrete import ConcreteTarget
 from ..memory_map import MemoryMap
