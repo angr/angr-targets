@@ -31,13 +31,10 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         try:
             l.debug("AvatarGDBConcreteTarget read_memory at %x "%(address))
 
-            zero_bit = bin(self.page_size).count("0") - 1
-            mask = (1 << zero_bit) - 1
-            base_address = address & (~mask)
-            last_address = base_address + self.page_size
+            page_end = (address | (self.page_size-1)) + 1
 
-            if address + nbytes > last_address:
-                nbytes = last_address - address
+            if address + nbytes > page_end:
+                nbytes = page_end - address
 
             res = self.target.read_memory(address, 1, int(nbytes), raw=True)
             return res
