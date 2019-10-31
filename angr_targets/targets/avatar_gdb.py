@@ -7,6 +7,8 @@ from angr.errors import SimConcreteMemoryError, SimConcreteRegisterError, SimCon
 from enum import IntEnum
 
 from ..concrete import ConcreteTarget
+from ..memory_map import MemoryMap
+from ..target_states import TargetStates
 
 l = logging.getLogger("angr_targets.avatar_gdb")
 #l.setLevel(logging.DEBUG)
@@ -30,13 +32,10 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         try:
             l.debug("AvatarGDBConcreteTarget read_memory at %x "%(address))
 
-            zero_bit = bin(self.page_size).count("0") - 1
-            mask = (1 << zero_bit) - 1
-            base_address = address & (~mask)
-            last_address = base_address + self.page_size
+            page_end = (address | (self.page_size-1)) + 1
 
-            if address + nbytes > last_address:
-                nbytes = last_address - address
+            if address + nbytes > page_end:
+                nbytes = page_end - address
 
             res = self.target.read_memory(address, 1, int(nbytes), raw=True)
             return res
@@ -57,12 +56,6 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
 
    
     def read_register(self,register,**kwargs):
-        if register is "pc":
-            if self.architecture is archs.x86.X86:
-                register = "eip"
-            elif self.architecture is archs.x86.X86_64:
-                register = "rip"
-
         try:
             l.debug("AvatarGDBConcreteTarget read_register at %s "%(register))
             register_value = self.target.read_register(register)
@@ -83,11 +76,6 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
             return register_value
 
     def write_register(self, register, value, **kwargs):
-        if register is "pc":
-            if self.architecture is archs.x86.X86:
-                register = "eip"
-            elif self.architecture is archs.x86.X86_64:
-                register = "rip"
         try:
             l.debug("AvatarGDBConcreteTarget write_register at %s value %x "%(register,value))
             res = self.target.write_register(register, value)
@@ -142,25 +130,6 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         Returns the mmap of the concrete process
         """
 
-        class MemoryMap:
-            """
-            Describing a memory range inside the concrete
-            process.
-            """
-            def __init__(self, start_address, end_address, offset, name):
-                self.start_address = start_address
-                self.end_address = end_address
-                self.offset = offset
-                self.name = name
-
-            def __str__(self):
-                my_str = "MemoryMap[start_address: 0x%x | end_address: 0x%x | name: %s" \
-                      % (self.start_address,
-                         self.end_address,
-                         self.name)
-
-                return my_str
-
         l.debug("getting the vmmap of the concrete process")
         mapping_output = self.target.protocols.memory.get_mappings()
 
@@ -195,20 +164,6 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
         return vmmap
 
     def is_running(self):
-
-        class TargetStates(IntEnum):
-            """
-            Enum copied from avatar target
-            A simple Enum for the different states a target can be in.
-            """
-            CREATED = 0x1
-            INITIALIZED = 0x2
-            STOPPED = 0x4
-            RUNNING = 0x8
-            SYNCING = 0x10
-            EXITED = 0x20
-            NOT_RUNNING = INITIALIZED | STOPPED
-
         return self.target.get_status() == TargetStates.RUNNING
 
     def stop(self):

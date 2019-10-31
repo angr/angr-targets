@@ -36,7 +36,6 @@ class ConcreteTarget(object):
     def read_register(self, register, **kwargs):
         """"
         Reads a register from the target
-        Special register "pc" should be treated accordingly to the architecture (eip,rip)
 
         :param str register: The name of the register
         :return: int value of the register content
@@ -48,7 +47,6 @@ class ConcreteTarget(object):
     def write_register(self, register, value, **kwargs):
         """
         Writes a register to the target
-        Special register "pc" should be treated accordingly to the architecture (eip,rip)
 
         :param str register:     The name of the register
         :param int value:        int value written to be written register
@@ -107,7 +105,9 @@ class ConcreteTarget(object):
             shellcode = "\x64\x48\x8B\x04\x25\x00\x00\x00\x00"    # mov rax, fs:[0]
             result_register = "rax"
             execute_shellcode(target, shellcode, result_register)
-       """
+        """
+        # FIXME: registers could be clobbered during shellcode execution, we should save
+        # registers before shellcode and then restore them.
 
         l.debug("Execute shellcode method!")
 
