@@ -48,7 +48,9 @@ def test_concrete_engine_linux_x86_no_simprocedures():
     p = angr.Project(binary_x86, concrete_target=avatar_gdb, use_sim_procedures=False,
                      page_size=0x1000)
     entry_state = p.factory.entry_state()
-    solv_concrete_engine_linux_x86(p, entry_state)
+    entry_state.options.add(angr.options.SYMBION_SYNC_CLE)
+    entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
+    solve_concrete_engine_linux_x86(p, entry_state)
 
 
 @nose.with_setup(setup_x86, teardown)
@@ -59,17 +61,20 @@ def test_concrete_engine_linux_x86_unicorn_no_simprocedures():
     p = angr.Project(binary_x86, concrete_target=avatar_gdb, use_sim_procedures=False,
                      page_size=0x1000)
     entry_state = p.factory.entry_state(add_options=angr.options.unicorn)
-    solv_concrete_engine_linux_x86(p, entry_state)
+    entry_state.options.add(angr.options.SYMBION_SYNC_CLE)
+    entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
+    solve_concrete_engine_linux_x86(p, entry_state)
 
 
-def execute_concretly(project, state, address, concretize):
-    simgr = project.factory.simgr(state)
-    simgr.use_technique(angr.exploration_techniques.Symbion(find=[address], concretize=concretize))
+def execute_concretly(p, state, address, memory_concretize=[], register_concretize=[], timeout=0):
+    simgr = p.factory.simgr(state)
+    simgr.use_technique(angr.exploration_techniques.Symbion(find=[address], memory_concretize=memory_concretize,
+                                                            register_concretize=register_concretize, timeout=timeout))
     exploration = simgr.run()
     return exploration.stashes['found'][0]
 
 
-def solv_concrete_engine_linux_x86(p, entry_state):
+def solve_concrete_engine_linux_x86(p, entry_state):
     # until unpacking of stub
     new_concrete_state = entry_state
 
@@ -90,7 +95,7 @@ def solv_concrete_engine_linux_x86(p, entry_state):
 
     binary_configuration = new_symbolic_state.solver.eval(arg0, cast_to=int)
 
-    execute_concretly(p, new_symbolic_state, BINARY_EXECUTION_END, [(symbolic_buffer_address, arg0)])
+    execute_concretly(p, new_symbolic_state, BINARY_EXECUTION_END, [(symbolic_buffer_address, arg0)], [])
 
     correct_solution = 0xa000000f9ffffff000000000000000000000000000000000000000000000000
     nose.tools.assert_true(binary_configuration == correct_solution)

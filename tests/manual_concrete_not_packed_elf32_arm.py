@@ -44,15 +44,16 @@ def test_concrete_engine_linux_arm_no_unicorn_simprocedures():
     # pylint: disable=no-member
     avatar_gdb = AvatarGDBConcreteTarget(avatar2.archs.ARM, GDB_SERVER_IP, GDB_SERVER_PORT)
     p = angr.Project(binary_arm, concrete_target=avatar_gdb, use_sim_procedures=True)
-
-
     entry_state = p.factory.entry_state()
+    entry_state.options.add(angr.options.SYMBION_SYNC_CLE)
+    entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
     solv_concrete_engine_linux_arm(p, entry_state)
 
 
-def execute_concretly(p, state, address, concretize):
+def execute_concretly(p, state, address, memory_concretize=[], register_concretize=[], timeout=0):
     simgr = p.factory.simgr(state)
-    simgr.use_technique(angr.exploration_techniques.Symbion(find=[address], concretize=concretize))
+    simgr.use_technique(angr.exploration_techniques.Symbion(find=[address], memory_concretize=memory_concretize,
+                                                            register_concretize=register_concretize, timeout=timeout))
     exploration = simgr.run()
     return exploration.stashes['found'][0]
 
@@ -74,7 +75,7 @@ def solv_concrete_engine_linux_arm(p, entry_state):
     new_symbolic_state = exploration.stashes['found'][0]
 
     #print("Executing BINARY concretely with solution found until the end " + hex(BINARY_EXECUTION_END))
-    execute_concretly(p, new_symbolic_state, BINARY_EXECUTION_END, [(symbolic_buffer_address, arg0)])
+    execute_concretly(p, new_symbolic_state, BINARY_EXECUTION_END, [(symbolic_buffer_address, arg0)], [])
 
     #print("BINARY execution ends, the configuration to reach your BB is: " + hex(binary_configuration))
 

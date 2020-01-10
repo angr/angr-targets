@@ -49,6 +49,8 @@ def test_concrete_engine_linux_x86_simprocedures():
     avatar_gdb = AvatarGDBConcreteTarget(avatar2.archs.x86.X86, GDB_SERVER_IP, GDB_SERVER_PORT)
     p = angr.Project(binary_x86, concrete_target=avatar_gdb, use_sim_procedures=True)
     entry_state = p.factory.entry_state()
+    entry_state.options.add(angr.options.SYMBION_SYNC_CLE)
+    entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
     solv_concrete_engine_linux_x86(p, entry_state)
 
 
@@ -59,6 +61,8 @@ def test_concrete_engine_linux_x86_no_simprocedures():
     avatar_gdb = AvatarGDBConcreteTarget(avatar2.archs.x86.X86, GDB_SERVER_IP, GDB_SERVER_PORT)
     p = angr.Project(binary_x86, concrete_target=avatar_gdb, use_sim_procedures=False)
     entry_state = p.factory.entry_state()
+    entry_state.options.add(angr.options.SYMBION_SYNC_CLE)
+    entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
     solv_concrete_engine_linux_x86(p, entry_state)
 
 
@@ -69,6 +73,8 @@ def test_concrete_engine_linux_x86_unicorn_simprocedures():
     avatar_gdb = AvatarGDBConcreteTarget(avatar2.archs.x86.X86, GDB_SERVER_IP, GDB_SERVER_PORT)
     p = angr.Project(binary_x86, concrete_target=avatar_gdb, use_sim_procedures=True)
     entry_state = p.factory.entry_state(add_options=angr.options.unicorn)
+    entry_state.options.add(angr.options.SYMBION_SYNC_CLE)
+    entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
     solv_concrete_engine_linux_x86(p, entry_state)
 
 
@@ -79,18 +85,21 @@ def test_concrete_engine_linux_x86_unicorn_no_simprocedures():
     avatar_gdb = AvatarGDBConcreteTarget(avatar2.archs.x86.X86, GDB_SERVER_IP, GDB_SERVER_PORT)
     p = angr.Project(binary_x86, concrete_target=avatar_gdb, use_sim_procedures=False)
     entry_state = p.factory.entry_state(add_options=angr.options.unicorn)
+    entry_state.options.add(angr.options.SYMBION_SYNC_CLE)
+    entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
     solv_concrete_engine_linux_x86(p, entry_state)
 
 
-def execute_concretly(p, state, address, concretize):
+def execute_concretly(p, state, address, memory_concretize=[], register_concretize=[], timeout=0):
     simgr = p.factory.simgr(state)
-    simgr.use_technique(angr.exploration_techniques.Symbion(find=[address], concretize=concretize))
+    simgr.use_technique(angr.exploration_techniques.Symbion(find=[address], memory_concretize=memory_concretize,
+                                                            register_concretize=register_concretize, timeout=timeout))
     exploration = simgr.run()
     return exploration.stashes['found'][0]
 
 
 def solv_concrete_engine_linux_x86(p, entry_state):
-    new_concrete_state = execute_concretly(p, entry_state, BINARY_DECISION_ADDRESS, [])
+    new_concrete_state = execute_concretly(p, entry_state, BINARY_DECISION_ADDRESS, [], [])
 
     arg0 = claripy.BVS('arg0', 8*32)
 
@@ -105,11 +114,10 @@ def solv_concrete_engine_linux_x86(p, entry_state):
     new_symbolic_state = exploration.stashes['found'][0]
 
     binary_configuration = new_symbolic_state.solver.eval(arg0, cast_to=int)
-
-    execute_concretly(p, new_symbolic_state, BINARY_EXECUTION_END, [(symbolic_buffer_address, arg0)])
-
+    execute_concretly(p, new_symbolic_state, BINARY_EXECUTION_END, [(symbolic_buffer_address, arg0)], [])
     correct_solution = 0xa000000f9ffffff000000000000000000000000000000000000000000000000
     nose.tools.assert_true(binary_configuration == correct_solution)
+
 
 def run_all():
     functions = globals()
