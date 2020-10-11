@@ -27,20 +27,16 @@ VENV_DETECTED = 0x400BC2
 FAKE_CC = 0x400BD6
 BINARY_EXECUTION_END = 0x400C03
 
-
 def setup_x64():
     subprocess.Popen("gdbserver %s:%s '%s'" % (GDB_SERVER_IP, GDB_SERVER_PORT, binary_x64), stdout=subprocess.PIPE,
                      stderr=subprocess.PIPE, shell=True)
 
-
 avatar_gdb = None
-
 
 def teardown():
     global avatar_gdb
     if avatar_gdb:
         avatar_gdb.exit()
-
 
 @nose.with_setup(setup_x64, teardown)
 def test_concrete_engine_linux_x64_simprocedures():
@@ -50,45 +46,6 @@ def test_concrete_engine_linux_x64_simprocedures():
     p = angr.Project(binary_x64, concrete_target=avatar_gdb, use_sim_procedures=True,
                      page_size=0x1000)
     entry_state = p.factory.entry_state()
-    entry_state.options.add(angr.options.SYMBION_SYNC_CLE)
-    entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
-    solv_concrete_engine_linux_x64(p, entry_state)
-
-
-@nose.with_setup(setup_x64, teardown)
-def test_concrete_engine_linux_x64_no_simprocedures():
-    global avatar_gdb
-    # pylint: disable=no-member
-    avatar_gdb = AvatarGDBConcreteTarget(avatar2.archs.x86.X86_64, GDB_SERVER_IP, GDB_SERVER_PORT)
-    p = angr.Project(binary_x64, concrete_target=avatar_gdb, use_sim_procedures=False,
-                     page_size=0x1000)
-    entry_state = p.factory.entry_state()
-    entry_state.options.add(angr.options.SYMBION_SYNC_CLE)
-    entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
-    solv_concrete_engine_linux_x64(p, entry_state)
-
-
-@nose.with_setup(setup_x64, teardown)
-def test_concrete_engine_linux_x64_unicorn_simprocedures():
-    global avatar_gdb
-    # pylint: disable=no-member
-    avatar_gdb = AvatarGDBConcreteTarget(avatar2.archs.x86.X86_64, GDB_SERVER_IP, GDB_SERVER_PORT)
-    p = angr.Project(binary_x64, concrete_target=avatar_gdb, use_sim_procedures=True,
-                     page_size=0x1000)
-    entry_state = p.factory.entry_state(add_options=angr.options.unicorn)
-    entry_state.options.add(angr.options.SYMBION_SYNC_CLE)
-    entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
-    solv_concrete_engine_linux_x64(p, entry_state)
-
-
-@nose.with_setup(setup_x64, teardown)
-def test_concrete_engine_linux_x64_unicorn_no_simprocedures():
-    global avatar_gdb
-    # pylint: disable=no-member
-    avatar_gdb = AvatarGDBConcreteTarget(avatar2.archs.x86.X86_64, GDB_SERVER_IP, GDB_SERVER_PORT)
-    p = angr.Project(binary_x64, concrete_target=avatar_gdb, use_sim_procedures=False,
-                     page_size=0x1000)
-    entry_state = p.factory.entry_state(add_options=angr.options.unicorn)
     entry_state.options.add(angr.options.SYMBION_SYNC_CLE)
     entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
     solv_concrete_engine_linux_x64(p, entry_state)
@@ -115,14 +72,15 @@ def solv_concrete_engine_linux_x64(p, state):
     if not exploration.stashes['found'] and exploration.errored and type(exploration.errored[0].error) is angr.errors.SimIRSBNoDecodeError:
         raise nose.SkipTest()
     new_symbolic_state = exploration.stashes['found'][0]
-
-    execute_concretly(p, new_symbolic_state, BINARY_EXECUTION_END, [(symbolic_buffer_address, arg0)], [])
-
     binary_configuration = new_symbolic_state.solver.eval(arg0, cast_to=int)
-
-    correct_solution = 0xa00000006000000f6ffffff0000000000000000000000000000000000000000
-
-    nose.tools.assert_true(binary_configuration == correct_solution)
+    new_concrete_state = execute_concretly(p, new_symbolic_state, DROP_STAGE2_V2, [(symbolic_buffer_address, arg0)], [])
+    
+    # Asserting we reach the dropping of stage 2
+    nose.tools.assert_true(new_concrete_state.solver.eval(new_concrete_state.regs.pc) == DROP_STAGE2_V2)
+    
+    # Go to the end.
+    new_concrete_state = execute_concretly(p, new_concrete_state, BINARY_EXECUTION_END, [], [])
+    nose.tools.assert_true(new_concrete_state.solver.eval(new_concrete_state.regs.pc) == BINARY_EXECUTION_END)
 
 def run_all():
     functions = globals()
