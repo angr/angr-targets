@@ -10,7 +10,7 @@ from ..memory_map import MemoryMap
 from ..target_states import TargetStates
 
 l = logging.getLogger("angr_targets.avatar_gdb")
-#l.setLevel(logging.DEBUG)
+l.setLevel(logging.DEBUG)
 
 
 class AvatarGDBConcreteTarget(ConcreteTarget):
@@ -30,7 +30,6 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
     def read_memory(self, address, nbytes, **kwargs):
         try:
             l.debug("AvatarGDBConcreteTarget read_memory at %x "%(address))
-
             page_end = (address | (self.page_size-1)) + 1
 
             if address + nbytes > page_end:
@@ -56,10 +55,10 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
    
     def read_register(self,register,**kwargs):
         try:
-            l.debug("AvatarGDBConcreteTarget read_register at %s "%(register))
+            #l.debug("AvatarGDBConcreteTarget read_register at %s "%(register))
             register_value = self.target.read_register(register)
         except Exception as e:
-            l.debug("AvatarGDBConcreteTarget read_register %s exception %s %s "%(register,type(e).__name__,e))
+            #l.debug("AvatarGDBConcreteTarget read_register %s exception %s %s "%(register,type(e).__name__,e))
             raise SimConcreteRegisterError("AvatarGDBConcreteTarget can't read register %s exception %s" % (register, e))
         # when accessing xmm registers and ymm register gdb return a list of 4/8 32 bit values
         # which need to be shifted appropriately to create a 128/256 bit value

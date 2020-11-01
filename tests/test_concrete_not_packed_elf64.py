@@ -61,10 +61,20 @@ def execute_concretly(p, state, address, memory_concretize=[], register_concreti
 
 def solv_concrete_engine_linux_x64(p, state):
     new_concrete_state = execute_concretly(p, state, BINARY_DECISION_ADDRESS, [])
+    the_sp = new_concrete_state.solver.eval(new_concrete_state.regs.sp)    
+    concrete_memory = new_concrete_state.memory.load(the_sp,20)
+    assert(not concrete_memory.symbolic)
 
     arg0 = claripy.BVS('arg0', 8*32)
     symbolic_buffer_address = new_concrete_state.regs.rbp-0xc0
+    
+    concrete_memory_2 = new_concrete_state.memory.load(symbolic_buffer_address, 36)
+    assert(not concrete_memory_2.symbolic)    
     new_concrete_state.memory.store(symbolic_buffer_address, arg0)
+
+    # We should read symbolic data from the page now
+    symbolic_memory = new_concrete_state.memory.load(symbolic_buffer_address, 36)
+    assert(symbolic_memory.symbolic)
 
     # symbolic exploration
     simgr = p.factory.simgr(new_concrete_state)

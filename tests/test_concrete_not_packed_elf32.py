@@ -53,17 +53,6 @@ def test_concrete_engine_linux_x86_simprocedures():
     entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
     solv_concrete_engine_linux_x86(p, entry_state)
 
-@nose.with_setup(setup_x86, teardown)
-def test_concrete_engine_linux_x86_unicorn_simprocedures():
-    global avatar_gdb
-    # pylint: disable=no-member
-    avatar_gdb = AvatarGDBConcreteTarget(avatar2.archs.x86.X86, GDB_SERVER_IP, GDB_SERVER_PORT)
-    p = angr.Project(binary_x86, concrete_target=avatar_gdb, use_sim_procedures=True)
-    entry_state = p.factory.entry_state(add_options=angr.options.unicorn)
-    entry_state.options.add(angr.options.SYMBION_SYNC_CLE)
-    entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
-    solv_concrete_engine_linux_x86(p, entry_state)
-
 def execute_concretly(p, state, address, memory_concretize=[], register_concretize=[], timeout=0):
     simgr = p.factory.simgr(state)
     simgr.use_technique(angr.exploration_techniques.Symbion(find=[address], memory_concretize=memory_concretize,
@@ -71,14 +60,26 @@ def execute_concretly(p, state, address, memory_concretize=[], register_concreti
     exploration = simgr.run()
     return exploration.stashes['found'][0]
 
-
 def solv_concrete_engine_linux_x86(p, entry_state):
     new_concrete_state = execute_concretly(p, entry_state, BINARY_DECISION_ADDRESS, [], [])
-
+    the_sp = new_concrete_state.solver.eval(new_concrete_state.regs.sp)    
+    concrete_memory = new_concrete_state.memory.load(the_sp,20)
+    assert(not concrete_memory.symbolic)
+    
+    # Assert we are reading concrete data from the process
     arg0 = claripy.BVS('arg0', 8*36)
-
     symbolic_buffer_address = new_concrete_state.regs.ebp-0xa0
+
+    # We should read the concrete data at the buffer address
+    concrete_memory_2 = new_concrete_state.memory.load(symbolic_buffer_address, 36)
+    assert(not concrete_memory_2.symbolic)
+    
+    # Store symbolic data there 
     new_concrete_state.memory.store(symbolic_buffer_address, arg0)
+    
+    # We should read symbolic data from the page now
+    symbolic_memory = new_concrete_state.memory.load(symbolic_buffer_address, 36)
+    assert(symbolic_memory.symbolic)
 
     # symbolic exploration
     simgr = p.factory.simgr(new_concrete_state)    
@@ -118,3 +119,4 @@ if __name__ == "__main__":
         globals()['test_' + sys.argv[1]]()
     else:
         run_all()
+
