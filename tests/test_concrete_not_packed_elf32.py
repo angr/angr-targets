@@ -52,6 +52,7 @@ def teardown():
 def test_concrete_engine_linux_x86_simprocedures():
     global avatar_gdb
     # pylint: disable=no-member
+    get_shell()
     avatar_gdb = AvatarGDBConcreteTarget(avatar2.archs.x86.X86, GDB_SERVER_IP, GDB_SERVER_PORT)
     p = angr.Project(binary_x86, concrete_target=avatar_gdb, use_sim_procedures=True)
     entry_state = p.factory.entry_state()
@@ -67,7 +68,6 @@ def execute_concretly(p, state, address, memory_concretize=[], register_concreti
     return exploration.stashes['found'][0]
 
 def solv_concrete_engine_linux_x86(p, entry_state):
-    get_shell()
     new_concrete_state = execute_concretly(p, entry_state, BINARY_DECISION_ADDRESS, [], [])
     the_sp = new_concrete_state.solver.eval(new_concrete_state.regs.sp)
     concrete_memory = new_concrete_state.memory.load(the_sp,20)
