@@ -54,6 +54,26 @@ class ConcreteTarget(object):
         """
         raise NotImplementedError()
 
+    def read_all_registers(self):
+        """
+        Reads the entire register file from the concrete target
+
+        This is primarily to facilitate state transitions and debugging interfaces
+        Many targets have a batch register reading function to enable this, as a performance optimization
+
+        :return: A dictionary mapping the string register name to its integer value
+        """
+        raise NotImplementedError()
+
+    def write_all_registers(self, values):
+        """
+        Writes the entire register file to the concrete target
+
+        :param values: A dictionary mapping the registers' names to their integer values
+        :return:
+        """
+        raise NotImplementedError
+
     def set_breakpoint(self, address, **kwargs):
         """
         Inserts a breakpoint
@@ -85,10 +105,57 @@ class ConcreteTarget(object):
     def get_mappings(self):
         raise NotImplementedError()
 
+    def reset(self, halt=False):
+        """
+        Resets the target to its initial state.
+
+        :param halt: Whether the target should be halted after the reset.
+        :return:
+        """
+        raise NotImplementedError()
+
+    def step(self):
+        """
+        Tell the target to advance one 'step'
+        Note that, unlike angr, concrete targets typically operate at the granularity of single instructions
+        :return:
+        """
+        raise NotImplementedError()
+
     def run(self):
         raise NotImplementedError()
 
+    def is_running(self):
+        raise NotImplementedError()
+
     def stop(self):
+        raise NotImplementedError()
+
+    def wait_for_running(self):
+        """
+        Block until the target is running
+        :return:
+        """
+        # NOTE: This is a default implementation.  You should probably override it
+        while not self.is_running():
+            pass
+
+    def wait_for_halt(self):
+        """
+        Block until the target is halted.
+        :return:
+        """
+        # NOTE: This is a default implementation. Please override it
+        while self.is_running():
+            pass
+
+    def wait_for_breakpoint(self, which=None):
+        """
+
+        :param which: integer address of the breakpoint to wait for
+        :return:
+        """
+        # NOTE: We can't implement this by default since targets don't track their own breakpoints
         raise NotImplementedError()
 
     def execute_shellcode(self, shellcode, result_register):
