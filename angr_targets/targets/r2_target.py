@@ -1,6 +1,8 @@
 
 import logging
 import os
+import json
+import re
 from base64 import b64encode, b64decode
 
 from angr.errors import SimConcreteMemoryError, SimConcreteRegisterError, SimConcreteBreakpointError
@@ -82,7 +84,8 @@ class R2ConcreteTarget(ConcreteTarget):
 
         try:
             l.debug("R2ConcreteTarget read_register at %s "%(register))
-            registers = self.r2.cmdj('drtj all')
+            #registers = self.r2.cmdj('drtj all')
+            registers = get_all_registers(self.r2)
         except Exception as e:
             l.debug("R2ConcreteTarget read_register %s exception %s %s "%(register,type(e).__name__,e))
             raise SimConcreteRegisterError("R2ConcreteTarget can't read register %s exception %s" % (register, e))
@@ -120,7 +123,8 @@ class R2ConcreteTarget(ConcreteTarget):
             register = self.r2.cmd('drn {}'.format(register)).strip()
             l.debug('R2ConcreteTarget resolved to %s', register)
 
-        registers = self.r2.cmdj('drtj all')
+        #registers = self.r2.cmdj('drtj all')
+        registers = get_all_registers(self.r2)
 
         #TODO: Implement xmm writes
 
@@ -137,7 +141,6 @@ class R2ConcreteTarget(ConcreteTarget):
             error = "R2ConcreteTarget write_register failed to correctly set register {}={}".format(register, hex(value))
             l.error(error)
             raise SimConcreteRegisterError(error)
-
 
     def set_breakpoint(self,address, **kwargs):
         """Inserts a breakpoint
@@ -268,6 +271,30 @@ class R2ConcreteTarget(ConcreteTarget):
     @property
     def bits(self):
         return self.r2.cmdj('iAj')['bins'][0]['bits']
+
+def get_all_registers(r2):
+    """Handles accounting for and fixing r2 bugs on the fly."""
+
+    try:
+        # Preferable, but often broken
+        ret = r2.cmdj("drtj all")
+        if ret != {} and ret is not None: return ret
+    except:
+        pass
+    
+    registers = {}
+    for t in r2.cmdj('drtj'):
+        regsj = r2.cmd('drtj ' + t)
+
+        # r2 likes to return invalid json. gotta fix it.
+        hex_vals = set(re.findall(":(0x.+?)[,}]", regsj))
+
+        for val in hex_vals:
+            regsj = regsj.replace(val, str(int(val,16)))
+
+        registers.update(json.loads(regsj))
+
+    return registers
 
 
 from ..memory_map import MemoryMap
