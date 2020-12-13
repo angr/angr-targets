@@ -35,7 +35,7 @@ avatar_gdb = None
 
 
 def teardown():
-    global avatar_gdbBINARY_EXECUTION_END
+    global avatar_gdb
     if avatar_gdb:
         avatar_gdb.exit()
     if gdbserver_proc is not None:
