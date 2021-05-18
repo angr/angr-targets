@@ -7,22 +7,22 @@ After that you can continue to analyse the binary with angr using as a memory ba
 Finally, you can use the results of the analysis to modify the process memory and control its execution path. 
 
 The angr concrete target needs to implement the ConcreteTarget interface which means:
-- read_memory(address,nbytes): Mandatory
-- write_memory(address, value): Mandatory
-- read_register(register): Mandatory
-- write_register(register, value): Mandatory
-- set_breakpoint(address): Mandatory
-- remove_breakpoint(self, address): Mandatory
-- set_watchpoint(self, address): Optional
-- remove_watchpoint(self, address): Optional
-- run(self): Mandatory
+- `read_memory(address,nbytes)`: Mandatory
+- `write_memory(address, value)`: Mandatory
+- `read_register(register)`: Mandatory
+- `write_register(register, value)`: Mandatory
+- `set_breakpoint(address)`: Mandatory
+- `remove_breakpoint(self, address)`: Mandatory
+- `set_watchpoint(self, address)`: Optional
+- `remove_watchpoint(self, address)`: Optional
+- `run(self)`: Mandatory
 
 In the ConcreteTarget class docstrings you can find the detailed definition of the methods and the types of arguments/return values
 
 Currently we have implemented 2 targets:
-- **AvatarGDBTarget**: Connects to a gdbserver instance which is running the process to synchronize the state with.
-- **RadareTarget**: Connects to a r2 instance.
-- **IDAConcreteTarget**: Uses the memory backend provided by the IDA Pro debugger.
+- `AvatarGDBTarget`: Connects to a gdbserver instance which is running the process to synchronize the state with.
+- `RadareTarget`: Connects to a r2 instance.
+- `IDAConcreteTarget`: Uses the memory backend provided by the IDA Pro debugger.
 
 ## Install
 
