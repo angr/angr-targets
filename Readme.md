@@ -28,6 +28,6 @@ Currently we have implemented 2 targets:
 
 ```sh
 $ cd angr-targets
-$ pip install --process-dependency-links -e .
+$ pip install -e .
 ```
 
