@@ -10,8 +10,10 @@ from ..memory_map import MemoryMap
 from ..target_states import TargetStates
 
 l = logging.getLogger("angr_targets.avatar_gdb")
-l.setLevel(logging.DEBUG)
+#l.setLevel(logging.DEBUG)
 
+# Disable unnecessary avatar logs...
+logging.getLogger("avatar").disabled = True
 
 class AvatarGDBConcreteTarget(ConcreteTarget):
    

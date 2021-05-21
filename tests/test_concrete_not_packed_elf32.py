@@ -82,13 +82,36 @@ def solv_concrete_engine_linux_x86(p, entry_state):
     assert(symbolic_memory.symbolic)
 
     # symbolic exploration
-    simgr = p.factory.simgr(new_concrete_state)    
-    simgr = simgr.explore(find=DROP_STAGE2_V1, avoid=[DROP_STAGE2_V2, VENV_DETECTED, FAKE_CC])
+    simgr = p.factory.simgr(new_concrete_state)
+    find_addr=DROP_STAGE2_V1
+    avoid_addrs=[DROP_STAGE2_V2, VENV_DETECTED, FAKE_CC]
     
-    if not simgr.stashes['found'] and simgr.errored and type(simgr.errored[0].error) is angr.errors.SimIRSBNoDecodeError:
-        raise nose.SkipTest()
+    simgr.use_technique(angr.exploration_techniques.DFS())
+    simgr.use_technique(angr.exploration_techniques.Explorer(find=find_addr, avoid=avoid_addrs))
     
+    new_concrete_state.globals["hit_malloc_sim_proc"] = False 
+    new_concrete_state.globals["hit_memcpy_sim_proc"] = False
+    
+    def check_hooked_simproc(state):
+        sim_proc_name = state.inspect.simprocedure_name
+        if sim_proc_name == "malloc":
+            state.globals["hit_malloc_sim_proc"] = True
+        elif sim_proc_name == "memcpy":
+            state.globals["hit_memcpy_sim_proc"] = True
+
+    new_concrete_state.inspect.b('simprocedure', action=check_hooked_simproc)
+    simgr.explore()
+    
+    #while len(simgr.stashes['found']) == 0 and len(simgr.active) > 0:
+    #    new_state = simgr.active[0]
+    #    simgr.step()
+
     new_symbolic_state = simgr.stashes['found'][0]
+    
+    # Assert we hit the re-hooked SimProc. 
+    assert(new_symbolic_state.globals["hit_malloc_sim_proc"])
+    assert(new_symbolic_state.globals["hit_memcpy_sim_proc"])
+    
     binary_configuration = new_symbolic_state.solver.eval(arg0, cast_to=int)
     new_concrete_state = execute_concretly(p, new_symbolic_state, DROP_STAGE2_V1, [(symbolic_buffer_address, arg0)], [])
     

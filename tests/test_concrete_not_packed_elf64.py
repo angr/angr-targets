@@ -69,7 +69,7 @@ def solv_concrete_engine_linux_x64(p, state):
     symbolic_buffer_address = new_concrete_state.regs.rbp-0xc0
     
     concrete_memory_2 = new_concrete_state.memory.load(symbolic_buffer_address, 36)
-    assert(not concrete_memory_2.symbolic)    
+    assert(not concrete_memory_2.symbolic)
     new_concrete_state.memory.store(symbolic_buffer_address, arg0)
 
     # We should read symbolic data from the page now
@@ -78,11 +78,33 @@ def solv_concrete_engine_linux_x64(p, state):
 
     # symbolic exploration
     simgr = p.factory.simgr(new_concrete_state)
-    exploration = simgr.explore(find=DROP_STAGE2_V2, avoid=[DROP_STAGE2_V1, VENV_DETECTED, FAKE_CC])
-    if not exploration.stashes['found'] and exploration.errored and type(exploration.errored[0].error) is angr.errors.SimIRSBNoDecodeError:
-        raise nose.SkipTest()
-    new_symbolic_state = exploration.stashes['found'][0]
+    find_addr=DROP_STAGE2_V2
+    avoid_addrs=[DROP_STAGE2_V1, VENV_DETECTED, FAKE_CC]
+    
+    simgr.use_technique(angr.exploration_techniques.DFS())
+    simgr.use_technique(angr.exploration_techniques.Explorer(find=find_addr, avoid=avoid_addrs))
+    
+    new_concrete_state.globals["hit_malloc_sim_proc"] = False 
+    new_concrete_state.globals["hit_memcpy_sim_proc"] = False
+    
+    def check_hooked_simproc(state):
+        sim_proc_name = state.inspect.simprocedure_name
+        if sim_proc_name == "malloc":
+            state.globals["hit_malloc_sim_proc"] = True
+        elif sim_proc_name == "memcpy":
+            state.globals["hit_memcpy_sim_proc"] = True
+
+    new_concrete_state.inspect.b('simprocedure', action=check_hooked_simproc)
+    simgr.explore()
+
+    new_symbolic_state = simgr.stashes['found'][0]
+
+    # Assert we hit the re-hooked SimProc. 
+    assert(new_symbolic_state.globals["hit_malloc_sim_proc"])
+    assert(new_symbolic_state.globals["hit_memcpy_sim_proc"])
+
     binary_configuration = new_symbolic_state.solver.eval(arg0, cast_to=int)
+    
     new_concrete_state = execute_concretly(p, new_symbolic_state, DROP_STAGE2_V2, [(symbolic_buffer_address, arg0)], [])
     
     # Asserting we reach the dropping of stage 2
@@ -112,3 +134,7 @@ if __name__ == "__main__":
         globals()['test_' + sys.argv[1]]()
     else:
         run_all()
+
+
+#setup_x64()
+#test_concrete_engine_linux_x64_simprocedures()
