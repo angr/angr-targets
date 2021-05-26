@@ -61,7 +61,7 @@ def execute_concretly(p, state, address, memory_concretize=[], register_concreti
 
 def solv_concrete_engine_linux_x64(p, state):
     new_concrete_state = execute_concretly(p, state, BINARY_DECISION_ADDRESS, [])
-    the_sp = new_concrete_state.solver.eval(new_concrete_state.regs.sp)    
+    the_sp = new_concrete_state.solver.eval(new_concrete_state.regs.sp)
     concrete_memory = new_concrete_state.memory.load(the_sp,20)
     assert(not concrete_memory.symbolic)
 

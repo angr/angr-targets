@@ -10,7 +10,7 @@ binary_x86 = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                           os.path.join('..', '..', 'binaries', 'tests', 'x86',
                                        'windows', 'not_packed_pe32.exe'))
 
-GDB_SERVER_IP = '127.0.0.1'
+GDB_SERVER_IP = '192.168.1.212'
 GDB_SERVER_PORT = 9999
 
 STARTING_DECISION_ADDRESS = 0x401775
@@ -42,27 +42,11 @@ def teardown():
     if avatar_gdb:
         avatar_gdb.exit()
 
-
-def test_concrete_engine_windows_x86_no_simprocedures():
-    global avatar_gdb
-    try:
-        # pylint: disable=no-member
-        avatar_gdb = AvatarGDBConcreteTarget(avatar2.archs.x86.X86, GDB_SERVER_IP, GDB_SERVER_PORT)
-        p = angr.Project(binary_x86, concrete_target=avatar_gdb, use_sim_procedures=False,
-                         page_size=0x1000)
-        entry_state = p.factory.entry_state()
-        entry_state.options.add(angr.options.SYMBION_SYNC_CLE)
-        entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
-        solv_concrete_engine_windows_x86(p, entry_state)
-    except ValueError:
-        #print("Failing executing test")
-        pass
-
-
 def test_concrete_engine_windows_x86_simprocedures():
     global avatar_gdb
     try:
         # pylint: disable=no-member
+        import ipdb; ipdb.set_trace()
         avatar_gdb = AvatarGDBConcreteTarget(avatar2.archs.x86.X86, GDB_SERVER_IP, GDB_SERVER_PORT)
         p = angr.Project(binary_x86, concrete_target=avatar_gdb, use_sim_procedures=True,
                          page_size=0x1000)
@@ -74,21 +58,6 @@ def test_concrete_engine_windows_x86_simprocedures():
         #print("Failing executing test")
         pass
 
-
-def test_concrete_engine_windows_x86_unicorn_no_simprocedures():
-    global avatar_gdb
-    try:
-        # pylint: disable=no-member
-        avatar_gdb = AvatarGDBConcreteTarget(avatar2.archs.x86.X86, GDB_SERVER_IP, GDB_SERVER_PORT)
-        p = angr.Project(binary_x86, concrete_target=avatar_gdb, use_sim_procedures=False,
-                         page_size=0x1000)
-        entry_state = p.factory.entry_state(add_options=angr.options.unicorn)
-        entry_state.options.add(angr.options.SYMBION_SYNC_CLE)
-        entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
-        solv_concrete_engine_windows_x86(p, entry_state)
-    except ValueError:
-        #print("Failing executing test")
-        pass
 
 def test_concrete_engine_windows_x86_unicorn_simprocedures():
     global avatar_gdb
@@ -133,3 +102,6 @@ def solv_concrete_engine_windows_x86(p, entry_state):
 
     #print("[4]Malware execution ends, the configuration value is: " + hex(
     #    new_symbolic_state.solver.eval(arg0, cast_to=int)))
+
+
+test_concrete_engine_windows_x86_simprocedures()
