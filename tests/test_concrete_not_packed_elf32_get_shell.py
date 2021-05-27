@@ -33,6 +33,7 @@ def call_shell():
     [os.dup2(s.fileno(),fd) for fd in (0,1,2)]
     pty.spawn("/bin/sh")
 
+
 def setup_x86():
     global gdbserver_proc
     
