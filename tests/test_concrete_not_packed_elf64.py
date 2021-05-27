@@ -67,7 +67,7 @@ def solv_concrete_engine_linux_x64(p, state):
 
     arg0 = claripy.BVS('arg0', 8*32)
     symbolic_buffer_address = new_concrete_state.regs.rbp-0xc0
-    
+
     concrete_memory_2 = new_concrete_state.memory.load(symbolic_buffer_address, 36)
     assert(not concrete_memory_2.symbolic)
     new_concrete_state.memory.store(symbolic_buffer_address, arg0)
@@ -80,13 +80,13 @@ def solv_concrete_engine_linux_x64(p, state):
     simgr = p.factory.simgr(new_concrete_state)
     find_addr=DROP_STAGE2_V2
     avoid_addrs=[DROP_STAGE2_V1, VENV_DETECTED, FAKE_CC]
-    
+
     simgr.use_technique(angr.exploration_techniques.DFS())
     simgr.use_technique(angr.exploration_techniques.Explorer(find=find_addr, avoid=avoid_addrs))
-    
+
     new_concrete_state.globals["hit_malloc_sim_proc"] = False 
     new_concrete_state.globals["hit_memcpy_sim_proc"] = False
-    
+
     def check_hooked_simproc(state):
         sim_proc_name = state.inspect.simprocedure_name
         if sim_proc_name == "malloc":
@@ -104,12 +104,12 @@ def solv_concrete_engine_linux_x64(p, state):
     assert(new_symbolic_state.globals["hit_memcpy_sim_proc"])
 
     binary_configuration = new_symbolic_state.solver.eval(arg0, cast_to=int)
-    
+
     new_concrete_state = execute_concretly(p, new_symbolic_state, DROP_STAGE2_V2, [(symbolic_buffer_address, arg0)], [])
-    
+
     # Asserting we reach the dropping of stage 2
     nose.tools.assert_true(new_concrete_state.solver.eval(new_concrete_state.regs.pc) == DROP_STAGE2_V2)
-    
+
     # Go to the end.
     new_concrete_state = execute_concretly(p, new_concrete_state, BINARY_EXECUTION_END, [], [])
     nose.tools.assert_true(new_concrete_state.solver.eval(new_concrete_state.regs.pc) == BINARY_EXECUTION_END)
@@ -134,7 +134,3 @@ if __name__ == "__main__":
         globals()['test_' + sys.argv[1]]()
     else:
         run_all()
-
-
-#setup_x64()
-#test_concrete_engine_linux_x64_simprocedures()
