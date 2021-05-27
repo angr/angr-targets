@@ -26,6 +26,8 @@ binary_x86 = os.path.join(os.path.dirname(os.path.realpath(__file__)),
 
 def setup_x86():
     global gdbserver_proc
+    cmd = 'gdbserver {}:{} "{}"'.format(GDB_SERVER_IP, GDB_SERVER_PORT, binary_x86)
+    print(cmd)
     gdbserver_proc = subprocess.Popen("gdbserver %s:%s '%s'" % (GDB_SERVER_IP, GDB_SERVER_PORT, binary_x86),
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
@@ -143,5 +145,5 @@ if __name__ == "__main__":
     else:
         run_all()
 
-#setup_x86()
-#test_concrete_engine_linux_x86_simprocedures()
+setup_x86()
+test_concrete_engine_linux_x86_simprocedures()

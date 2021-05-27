@@ -59,82 +59,13 @@ def teardown():
 @nose.with_setup(setup_x86, teardown)
 def test_concrete_engine_linux_x86_simprocedures():
     global avatar_gdb
-    # pylint: disable=no-member
-    avatar_gdb = AvatarGDBConcreteTarget(avatar2.archs.x86.X86, GDB_SERVER_IP, GDB_SERVER_PORT)
-    p = angr.Project(binary_x86, concrete_target=avatar_gdb, use_sim_procedures=True)
-    entry_state = p.factory.entry_state()
-    entry_state.options.add(angr.options.SYMBION_SYNC_CLE)
-    entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
-    solv_concrete_engine_linux_x86(p, entry_state)
+    pass
 
 def execute_concretly(p, state, address, memory_concretize=[], register_concretize=[], timeout=0):
-    simgr = p.factory.simgr(state)
-    simgr.use_technique(angr.exploration_techniques.Symbion(find=[address], memory_concretize=memory_concretize,
-                                                            register_concretize=register_concretize, timeout=timeout))
-    exploration = simgr.run()
-    return exploration.stashes['found'][0]
+    pass
 
 def solv_concrete_engine_linux_x86(p, entry_state):
-    new_concrete_state = execute_concretly(p, entry_state, BINARY_DECISION_ADDRESS, [], [])
-    the_sp = new_concrete_state.solver.eval(new_concrete_state.regs.sp)    
-    concrete_memory = new_concrete_state.memory.load(the_sp,20)
-    assert(not concrete_memory.symbolic)
-    
-    # Assert we are reading concrete data from the process
-    arg0 = claripy.BVS('arg0', 8*36)
-    symbolic_buffer_address = new_concrete_state.regs.ebp-0xa0
-
-    # We should read the concrete data at the buffer address
-    concrete_memory_2 = new_concrete_state.memory.load(symbolic_buffer_address, 36)
-    assert(not concrete_memory_2.symbolic)
-    
-    # Store symbolic data there 
-    new_concrete_state.memory.store(symbolic_buffer_address, arg0)
-    
-    # We should read symbolic data from the page now
-    
-    symbolic_memory = new_concrete_state.memory.load(symbolic_buffer_address, 36)
-    assert(symbolic_memory.symbolic)
-
-    # symbolic exploration
-    simgr = p.factory.simgr(new_concrete_state)
-    find_addr=DROP_STAGE2_V1
-    avoid_addrs=[DROP_STAGE2_V2, VENV_DETECTED, FAKE_CC]
-    
-    simgr.use_technique(angr.exploration_techniques.DFS())
-    simgr.use_technique(angr.exploration_techniques.Explorer(find=find_addr, avoid=avoid_addrs))
-    
-    new_concrete_state.globals["hit_malloc_sim_proc"] = False 
-    new_concrete_state.globals["hit_memcpy_sim_proc"] = False
-    
-    def check_hooked_simproc(state):
-        sim_proc_name = state.inspect.simprocedure_name
-        if sim_proc_name == "malloc":
-            state.globals["hit_malloc_sim_proc"] = True
-        elif sim_proc_name == "memcpy":
-            state.globals["hit_memcpy_sim_proc"] = True
-
-    new_concrete_state.inspect.b('simprocedure', action=check_hooked_simproc)
-    simgr.explore()
-
-    #while len(simgr.stashes['found']) == 0 and len(simgr.active) > 0:
-    #    new_state = simgr.active[0]
-    #    simgr.step()
-
-    new_symbolic_state = simgr.stashes['found'][0]
-    
-    # Assert we hit the re-hooked SimProc. 
-    assert(new_symbolic_state.globals["hit_malloc_sim_proc"])
-    assert(new_symbolic_state.globals["hit_memcpy_sim_proc"])
-    
-    binary_configuration = new_symbolic_state.solver.eval(arg0, cast_to=int)
-    new_concrete_state = execute_concretly(p, new_symbolic_state, DROP_STAGE2_V1, [(symbolic_buffer_address, arg0)], [])
-    # Asserting we reach the dropping of stage 2
-    nose.tools.assert_true(new_concrete_state.solver.eval(new_concrete_state.regs.pc) == DROP_STAGE2_V1)
-    
-    # Go to the end.
-    new_concrete_state = execute_concretly(p, new_concrete_state, BINARY_EXECUTION_END, [], [])
-    nose.tools.assert_true(new_concrete_state.solver.eval(new_concrete_state.regs.pc) == BINARY_EXECUTION_END)
+    pass
 
 
 def run_all():
