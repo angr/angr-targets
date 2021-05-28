@@ -84,7 +84,7 @@ def solv_concrete_engine_linux_x64(p, state):
     simgr.use_technique(angr.exploration_techniques.DFS())
     simgr.use_technique(angr.exploration_techniques.Explorer(find=find_addr, avoid=avoid_addrs))
 
-    new_concrete_state.globals["hit_malloc_sim_proc"] = False 
+    new_concrete_state.globals["hit_malloc_sim_proc"] = False
     new_concrete_state.globals["hit_memcpy_sim_proc"] = False
 
     def check_hooked_simproc(state):
@@ -99,7 +99,7 @@ def solv_concrete_engine_linux_x64(p, state):
 
     new_symbolic_state = simgr.stashes['found'][0]
 
-    # Assert we hit the re-hooked SimProc. 
+    # Assert we hit the re-hooked SimProc.
     assert(new_symbolic_state.globals["hit_malloc_sim_proc"])
     assert(new_symbolic_state.globals["hit_memcpy_sim_proc"])
 
