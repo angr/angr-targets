@@ -8,7 +8,7 @@ try:
     import avatar2
     from angr_targets import AvatarGDBConcreteTarget
 except ImportError:
-    raise nose.SkipTest()
+    raise nose.SkipTest() # pylint: disable=W0707
 
 GDB_SERVER_IP = '127.0.0.1'
 GDB_SERVER_PORT = 9999
@@ -21,14 +21,13 @@ FAKE_CC = 0x8048962
 BINARY_EXECUTION_END = 0x8048992
 
 binary_x86 = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                          os.path.join('..', '..', 'binaries', 'tests', 'i386', 'not_packed_elf32'))
+                          os.path.join('..', '..', 'binaries', 'tests', 'i386', 'not_packed_elf32')) # pylint: disable=R1732
 
 
 def setup_x86():
     global gdbserver_proc
-    cmd = 'gdbserver {}:{} "{}"'.format(GDB_SERVER_IP, GDB_SERVER_PORT, binary_x86)
     gdbserver_proc = subprocess.Popen("gdbserver %s:%s '%s'" % (GDB_SERVER_IP, GDB_SERVER_PORT, binary_x86),
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True) 
 
 
 gdbserver_proc = None
@@ -54,7 +53,7 @@ def test_concrete_engine_linux_x86_simprocedures():
     entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
     solv_concrete_engine_linux_x86(p, entry_state)
 
-def execute_concretly(p, state, address, memory_concretize=[], register_concretize=[], timeout=0):
+def execute_concretly(p, state, address, memory_concretize=None, register_concretize=None, timeout=0):
     simgr = p.factory.simgr(state)
     simgr.use_technique(angr.exploration_techniques.Symbion(find=[address], memory_concretize=memory_concretize,
                                                             register_concretize=register_concretize, timeout=timeout))
