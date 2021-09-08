@@ -50,14 +50,12 @@ def test_concrete_engine_linux_x64_simprocedures():
     entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
     solv_concrete_engine_linux_x64(p, entry_state)
 
-
 def execute_concretly(p, state, address, memory_concretize=[], register_concretize=[], timeout=0):
     simgr = p.factory.simgr(state)
     simgr.use_technique(angr.exploration_techniques.Symbion(find=[address], memory_concretize=memory_concretize,
                                                             register_concretize=register_concretize, timeout=timeout))
     exploration = simgr.run()
     return exploration.stashes['found'][0]
-
 
 def solv_concrete_engine_linux_x64(p, state):
     new_concrete_state = execute_concretly(p, state, BINARY_DECISION_ADDRESS, [])
