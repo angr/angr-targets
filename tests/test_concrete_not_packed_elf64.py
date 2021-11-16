@@ -44,7 +44,9 @@ def test_concrete_engine_linux_x64_simprocedures():
     # pylint: disable=no-member
     avatar_gdb = AvatarGDBConcreteTarget(avatar2.archs.x86.X86_64, GDB_SERVER_IP, GDB_SERVER_PORT)
     p = angr.Project(binary_x64, concrete_target=avatar_gdb, use_sim_procedures=True,
-                     page_size=0x1000)
+                     page_size=0x1000,
+                     auto_load_libs=False,
+                     )
     entry_state = p.factory.entry_state()
     entry_state.options.add(angr.options.SYMBION_SYNC_CLE)
     entry_state.options.add(angr.options.SYMBION_KEEP_STUBS_ON_SYNC)
