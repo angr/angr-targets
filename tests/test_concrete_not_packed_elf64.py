@@ -1,9 +1,8 @@
+import os
+import unittest
+import subprocess
 import angr
 import claripy
-import unittest
-import os
-import subprocess
-import logging
 
 
 try:
@@ -56,7 +55,8 @@ class testConcrete(unittest.TestCase):
     def execute_concretly(self, p, state, address, memory_concretize=[], register_concretize=[], timeout=0):
         simgr = p.factory.simgr(state)
         simgr.use_technique(angr.exploration_techniques.Symbion(find=[address], memory_concretize=memory_concretize,
-                                                                register_concretize=register_concretize, timeout=timeout))
+                                                                register_concretize=register_concretize,
+                                                                timeout=timeout))
         exploration = simgr.run()
         return exploration.stashes['found'][0]
 
@@ -64,18 +64,18 @@ class testConcrete(unittest.TestCase):
         new_concrete_state = self.execute_concretly(p, state, BINARY_DECISION_ADDRESS, [])
         the_sp = new_concrete_state.solver.eval(new_concrete_state.regs.sp)
         concrete_memory = new_concrete_state.memory.load(the_sp,20)
-        assert(not concrete_memory.symbolic)
+        assert not concrete_memory.symbolic
 
         arg0 = claripy.BVS('arg0', 8*32)
         symbolic_buffer_address = new_concrete_state.regs.rbp-0xc0
 
         concrete_memory_2 = new_concrete_state.memory.load(symbolic_buffer_address, 36)
-        assert(not concrete_memory_2.symbolic)
+        assert not concrete_memory_2.symbolic
         new_concrete_state.memory.store(symbolic_buffer_address, arg0)
 
         # We should read symbolic data from the page now
         symbolic_memory = new_concrete_state.memory.load(symbolic_buffer_address, 36)
-        assert(symbolic_memory.symbolic)
+        assert symbolic_memory.symbolic
 
         # symbolic exploration
         simgr = p.factory.simgr(new_concrete_state)
@@ -101,12 +101,13 @@ class testConcrete(unittest.TestCase):
         new_symbolic_state = simgr.stashes['found'][0]
 
         # Assert we hit the re-hooked SimProc.
-        assert(new_symbolic_state.globals["hit_malloc_sim_proc"])
-        assert(new_symbolic_state.globals["hit_memcpy_sim_proc"])
+        assert new_symbolic_state.globals["hit_malloc_sim_proc"]
+        assert new_symbolic_state.globals["hit_memcpy_sim_proc"]
 
         binary_configuration = new_symbolic_state.solver.eval(arg0, cast_to=int)
 
-        new_concrete_state = self.execute_concretly(p, new_symbolic_state, DROP_STAGE2_V2, [(symbolic_buffer_address, arg0)], [])
+        new_concrete_state = self.execute_concretly(p, new_symbolic_state, DROP_STAGE2_V2,
+            [(symbolic_buffer_address, arg0)], [])
 
         # Asserting we reach the dropping of stage 2
         assert new_concrete_state.solver.eval(new_concrete_state.regs.pc) == DROP_STAGE2_V2
