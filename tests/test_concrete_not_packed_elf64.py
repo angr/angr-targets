@@ -7,9 +7,13 @@ import claripy
 
 try:
     import avatar2
-    from angr_targets import AvatarGDBConcreteTarget
 except ImportError:
-    raise unittest.SkipTest()
+    avatar2 = None
+
+try:
+    from angr_targets import AvatarGDBConcreteTarget
+except  ImportError:
+    AvatarGDBConcreteTarget = None
 
 
 binary_x64 = os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -27,9 +31,12 @@ VENV_DETECTED = 0x400BC2
 FAKE_CC = 0x400BD6
 BINARY_EXECUTION_END = 0x400C03
 
-class testConcrete(unittest.TestCase):
+
+@unittest.skipUnless(AvatarGDBConcreteTarget is not None, "skip")
+@unittest.skipUnless(avatar2 is not None, "skip")
+class TestConcrete(unittest.TestCase):
     @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         subprocess.Popen("gdbserver %s:%s '%s'" % (GDB_SERVER_IP, GDB_SERVER_PORT, binary_x64), stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE, shell=True)
 
@@ -37,7 +44,7 @@ class testConcrete(unittest.TestCase):
 
     @classmethod
     def tearDown(self):
-        global avatar_gdb
+        self.avatar_gdb
         if avatar_gdb:
             avatar_gdb.exit()
 
