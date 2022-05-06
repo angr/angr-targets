@@ -34,14 +34,12 @@ BINARY_EXECUTION_END = 0x400C03
 
 @unittest.skipUnless(avatar2 is not None, "requires avatar2")
 class TestConcrete(unittest.TestCase):
-    
-    @classmethod
+
     def setUp(self):
         self.avatar_gdb = None
         subprocess.Popen("gdbserver %s:%s '%s'" % (GDB_SERVER_IP, GDB_SERVER_PORT, binary_x64), stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE, shell=True)
 
-    @classmethod
     def tearDown(self):
         if self.avatar_gdb:
             self.avatar_gdb.exit()
