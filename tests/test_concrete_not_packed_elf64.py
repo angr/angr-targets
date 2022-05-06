@@ -120,18 +120,5 @@ class TestConcrete(unittest.TestCase):
         new_concrete_state = self.execute_concretly(p, new_concrete_state, BINARY_EXECUTION_END, [], [])
         assert new_concrete_state.solver.eval(new_concrete_state.regs.pc) == BINARY_EXECUTION_END
 
-    # def run_all(self):
-    #     functions = globals()
-    #     all_functions = dict(filter((lambda kv: kv[0].startswith('test_')), functions.items()))
-    #     for f in sorted(all_functions.keys()):
-    #         if hasattr(all_functions[f], '__call__'):
-    #             if hasattr(all_functions[f], 'setup'):
-    #                 all_functions[f].setup()
-    #             try:
-    #                 all_functions[f]()
-    #             finally:
-    #                 if hasattr(all_functions[f], 'teardown'):
-    #                     all_functions[f].tearDown()
-
 if __name__ == "__main__":
     unittest.main()
