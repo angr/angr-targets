@@ -32,27 +32,24 @@ FAKE_CC = 0x400BD6
 BINARY_EXECUTION_END = 0x400C03
 
 
-@unittest.skipUnless(AvatarGDBConcreteTarget is not None, "skip")
-@unittest.skipUnless(avatar2 is not None, "skip")
+@unittest.skipUnless(avatar2 is not None, "requires avatar2")
 class TestConcrete(unittest.TestCase):
+    
     @classmethod
     def setUp(self):
+        self.avatar_gdb = None
         subprocess.Popen("gdbserver %s:%s '%s'" % (GDB_SERVER_IP, GDB_SERVER_PORT, binary_x64), stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE, shell=True)
 
-    avatar_gdb = None
-
     @classmethod
     def tearDown(self):
-        self.avatar_gdb
-        if avatar_gdb:
-            avatar_gdb.exit()
+        if self.avatar_gdb:
+            self.avatar_gdb.exit()
 
     def test_concrete_engine_linux_x64_simprocedures(self):
-        global avatar_gdb
         # pylint: disable=no-member
-        avatar_gdb = AvatarGDBConcreteTarget(avatar2.archs.x86.X86_64, GDB_SERVER_IP, GDB_SERVER_PORT)
-        p = angr.Project(binary_x64, concrete_target=avatar_gdb, use_sim_procedures=True,
+        self.avatar_gdb = AvatarGDBConcreteTarget(avatar2.archs.x86.X86_64, GDB_SERVER_IP, GDB_SERVER_PORT)
+        p = angr.Project(binary_x64, concrete_target=self.avatar_gdb, use_sim_procedures=True,
                          page_size=0x1000)
         entry_state = p.factory.entry_state()
         entry_state.options.add(angr.options.SYMBION_SYNC_CLE)
@@ -123,18 +120,18 @@ class TestConcrete(unittest.TestCase):
         new_concrete_state = self.execute_concretly(p, new_concrete_state, BINARY_EXECUTION_END, [], [])
         assert new_concrete_state.solver.eval(new_concrete_state.regs.pc) == BINARY_EXECUTION_END
 
-    def run_all(self):
-        functions = globals()
-        all_functions = dict(filter((lambda kv: kv[0].startswith('test_')), functions.items()))
-        for f in sorted(all_functions.keys()):
-            if hasattr(all_functions[f], '__call__'):
-                if hasattr(all_functions[f], 'setup'):
-                    all_functions[f].setup()
-                try:
-                    all_functions[f]()
-                finally:
-                    if hasattr(all_functions[f], 'teardown'):
-                        all_functions[f].tearDown()
+    # def run_all(self):
+    #     functions = globals()
+    #     all_functions = dict(filter((lambda kv: kv[0].startswith('test_')), functions.items()))
+    #     for f in sorted(all_functions.keys()):
+    #         if hasattr(all_functions[f], '__call__'):
+    #             if hasattr(all_functions[f], 'setup'):
+    #                 all_functions[f].setup()
+    #             try:
+    #                 all_functions[f]()
+    #             finally:
+    #                 if hasattr(all_functions[f], 'teardown'):
+    #                     all_functions[f].tearDown()
 
 if __name__ == "__main__":
     unittest.main()
