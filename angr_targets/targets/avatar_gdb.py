@@ -17,11 +17,11 @@ logging.getLogger("avatar").disabled = True
 
 class AvatarGDBConcreteTarget(ConcreteTarget):
    
-    def __init__(self,architecture, gdbserver_ip, gdbserver_port ):
+    def __init__(self, architecture, gdbserver_ip, gdbserver_port, gdb_executable="gdb-multiarch"):
         # Creation of the avatar-object
         self.avatar = Avatar(arch=architecture)
         self.architecture = architecture
-        self.target = self.avatar.add_target(GDBTarget, gdb_executable="gdb-multiarch", gdb_ip=gdbserver_ip, gdb_port=gdbserver_port)
+        self.target = self.avatar.add_target(GDBTarget, gdb_executable=gdb_executable, gdb_ip=gdbserver_ip, gdb_port=gdbserver_port)
         self.avatar.init_targets()
         self.page_size = 0x1000  # I want this to be passed by the project in a clean way..
         super(AvatarGDBConcreteTarget, self).__init__()
