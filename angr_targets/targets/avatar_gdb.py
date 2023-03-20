@@ -153,10 +153,16 @@ class AvatarGDBConcreteTarget(ConcreteTarget):
                 offset = map[3].replace("\\n", '')
                 offset = offset.replace("\\t", '')
                 offset = int(offset, 16)
-                map_name = map[4].replace("\\n", '')
+                if len(map) > 5:
+                    perms = map[4].replace("\\n", '')
+                    perms = perms.replace("\\t", '')
+                    map_name = map[5].replace("\\n", '')
+                else:
+                    perms = None
+                    map_name = map[4].replace("\\n", '')
                 map_name = map_name.replace("\\t", '')
                 map_name = os.path.basename(map_name)
-                vmmap.append(MemoryMap(map_start_address, map_end_address, offset, map_name))
+                vmmap.append(MemoryMap(map_start_address, map_end_address, offset, map_name, perms))
             except (IndexError, ValueError):
                 l.debug("Can't process this vmmap entry")
                 pass
