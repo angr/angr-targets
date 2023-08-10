@@ -14,6 +14,11 @@ try:
 except Exception as e:
     l.error("Impossible to load R2ConcreteTarget exception %s"%(e))
 
+try:
+    from .targets.panda_target import PandaConcreteTarget
+except Exception as e:
+    l.error("Impossible to load PandaConcreteTarget exception %s"%(e))
+
 '''
 try:
     from .targets.ida_target import IDAConcreteTarget
