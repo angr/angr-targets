@@ -19,8 +19,9 @@ The angr concrete target needs to implement the ConcreteTarget interface which m
 
 In the ConcreteTarget class docstrings you can find the detailed definition of the methods and the types of arguments/return values
 
-Currently we support only 1 target:
+Currently we support 2 targets:
 - `AvatarGDBTarget`: Connects to a gdbserver instance.
+- `PandaConcreteTarget`: Connects to an emulated guest system running with [PANDA](https://panda.re).
 
 ## Install
 
