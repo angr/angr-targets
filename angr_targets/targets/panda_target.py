@@ -83,12 +83,43 @@ class PandaConcreteTarget(ConcreteTarget):
         mapping_output = self.panda.get_mappings(self.panda.get_cpu())
 
         vmmap = []
+
+        #vm_flags for permissions from linux/mm.h, stable since at least 2.4
+        VM_READ = 0x00000001
+        VM_WRITE = 0x00000002
+        VM_EXEC = 0x00000004
+        VM_MAYSHARE = 0x00000080
+        VM_SHARED = 0x00000008
+
         for mapping in mapping_output:
             if mapping.file == self.panda.ffi.NULL:
                 continue # Unknown name
             filename = self.panda.ffi.string(mapping.file).decode()
+            perms=''
+
+            if mapping.flags & VM_READ:
+                perms += 'r'
+            else:
+                perms += '-'
+
+            if mapping.flags & VM_WRITE:
+                perms += 'w'
+            else:
+                perms += '-'
+
+            if mapping.flags & VM_EXEC:
+                perms += 'x'
+            else:
+                perms += '-'
+
+            if mapping.flags & (VM_SHARED | VM_MAYSHARE):
+                perms += '-'
+            else:
+                #Private if neither is set
+                perms += 'p'
+
             vmmap.append(MemoryMap(mapping.base, mapping.base + mapping.size, mapping.offset,
-                                   filename))
+                                   filename, perms))
 
         return vmmap
 
